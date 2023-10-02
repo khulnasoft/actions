@@ -1,0 +1,32 @@
+name: "Khulnasoft Docker"
+description: "Check your Docker images for vulnerabilties using Khulnasoft"
+author: "Md Sulaiman"
+branding:
+  icon: "alert-triangle"
+  color: "yellow"
+inputs:
+  command:
+    description: "Which Khulnasoft command to run, defaults to test"
+    default: test
+  args:
+    description: "Additional arguments to pass to Khulnasoft"
+  image:
+    description: "Image to test"
+  json:
+    description: "Output a khulnasoft.json file with results if running the test command"
+    default: false
+  sarif:
+    description: "Output a khulnasoft.sarif file with results if running the test command"
+    default: true
+runs:
+  using: "docker"
+  image: "docker://khulnasoft/khulnasoft:docker"
+  env:
+    KHULNASOFT_INTEGRATION_NAME: GITHUB_ACTIONS
+    KHULNASOFT_INTEGRATION_VERSION: docker
+  args:
+  - khulnasoft
+  - ${{ inputs.command }}
+  - ${{ inputs.args }}
+  - --docker
+  - ${{ inputs.image }}

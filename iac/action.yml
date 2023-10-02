@@ -1,0 +1,32 @@
+name: "Khulnasoft Infrastructure as Code"
+description: "Check your Infrastructure as Code fields for issues using Khulnasoft"
+author: "Md Sulaiman"
+branding:
+  icon: "alert-triangle"
+  color: "yellow"
+inputs:
+  command:
+    description: "Which Khulnasoft command to run, defaults to test"
+    default: test
+  args:
+    description: "Additional arguments to pass to Khulnasoft"
+  file:
+    description: "File to test"
+  json:
+    description: "Output a khulnasoft.json file with results if running the test command"
+    default: false
+  sarif:
+    description: "Output a khulnasoft.sarif file with results if running the test command"
+    default: true
+runs:
+  using: "docker"
+  image: "docker://khulnasoft/khulnasoft:alpine"
+  env:
+    KHULNASOFT_INTEGRATION_NAME: GITHUB_ACTIONS
+    KHULNASOFT_INTEGRATION_VERSION: iac
+  args:
+  - khulnasoft
+  - iac
+  - ${{ inputs.command }}
+  - ${{ inputs.file }}
+  - ${{ inputs.args }}

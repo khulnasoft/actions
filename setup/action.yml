@@ -1,0 +1,22 @@
+name: "Setup Khulnasoft"
+description: "Installs a specific version of Khulnasoft"
+author: "Md Sulaiman"
+branding:
+  icon: "alert-triangle"
+  color: "yellow"
+inputs:
+  khulnasoft-version:
+    description: "Which Khulnasoft version to install"
+    default: latest
+outputs:
+  version:
+    description: "The version of Khulnasoft installed"
+    value: ${{ steps.version.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - run: ${{ github.action_path }}/setup_khulnasoft.sh ${{ inputs.khulnasoft-version }} ${{ runner.os }}
+      shell: bash
+    - id: version
+      shell: bash
+      run: echo "version=$(khulnasoft version)" >> $GITHUB_OUTPUT

@@ -1,0 +1,34 @@
+# A sample workflow which checks out the code, builds a container
+# image using Docker and scans that image for vulnerabilities using
+# Khulnasoft. The results are then uploaded to GitHub Security Code Scanning
+#
+# For more examples, including how to limit scans to only high-severity
+# issues, monitor images for newly disclosed vulnerabilities in Khulnasoft and
+# fail PR checks for new vulnerabilities, see https://github.com/khulnasoft/actions/
+
+name: Khulnasoft Container 
+on: push
+jobs:
+  khulnasoft:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build a Docker image
+      run: docker build -t your/image-to-test .
+    - name: Run Khulnasoft to check Docker image for vulnerabilities
+      # Khulnasoft can be used to break the build when it detects vulnerabilities.
+      # In this case we want to upload the issues to GitHub Code Scanning
+      continue-on-error: true
+      uses: khulnasoft/actions/docker@master
+      env:
+        # In order to use the Khulnasoft Action you will need to have a Khulnasoft API token.
+        # More details in https://github.com/khulnasoft/actions#getting-your-khulnasoft-token
+        # or you can signup for free at https://khulnasoft.com/login
+        KHULNASOFT_TOKEN: ${{ secrets.KHULNASOFT_TOKEN }}
+      with:
+        image: your/image-to-test
+        args: --file=Dockerfile
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: khulnasoft.sarif

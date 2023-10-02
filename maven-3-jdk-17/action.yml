@@ -1,0 +1,26 @@
+name: "Khulnasoft Maven (3-jdk-17)"
+description: "Check your Maven application for vulnerabilties using Khulnasoft"
+author: "Md Sulaiman"
+branding:
+  icon: "alert-triangle"
+  color: "yellow"
+inputs:
+  command:
+    description: "Which Khulnasoft command to run, defaults to test"
+    default: test
+  args:
+    description: "Additional arguments to pass to Khulnasoft"
+  json:
+    description: "Output a khulnasoft.json file with results if running the test command"
+    default: false
+runs:
+  using: "docker"
+  image: "docker://khulnasoft/khulnasoft:maven-3-jdk-17"
+  env:
+    FORCE_COLOR: 2
+    KHULNASOFT_INTEGRATION_NAME: GITHUB_ACTIONS
+    KHULNASOFT_INTEGRATION_VERSION: maven-3-jdk-17
+  args:
+  - khulnasoft
+  - ${{ inputs.command }}
+  - ${{ inputs.args }} 
