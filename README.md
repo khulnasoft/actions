@@ -114,6 +114,7 @@ Every Khulnasoft account has this token. Once you [create an account](https://kh
 
 All Khulnasoft GitHub Actions support integration with GitHub Code Scanning to show vulnerability information in the GitHub Security tab. You can see full details on the individual action READMEs linked above.
 
+![Khulnasoft results as a SARIF output uploaded to GitHub Code Scanning](_templates/sarif-example.png)
 
 ### Continuing on error
 
