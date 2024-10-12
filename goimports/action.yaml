@@ -1,0 +1,69 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: 'goimports'
+description: |
+  This action runs goimports over the working tree and then verifies
+  that there are no differences from running the tool.
+
+inputs:
+  local:
+    description: |
+      The goimports -local flag value
+    default: ''
+  working-directory:
+    description: |
+      The working directory to run goimports
+    default: "."
+  dirs:
+    description: |
+      Space separated list of dirs to search for go modules. Defaults to current directory.
+    default: "."
+
+runs:
+  using: "composite"
+  steps:
+  - name: install goimports
+    shell: bash
+    env:
+      GO111MODULE: on
+    run: |
+      cd $(mktemp -d)
+      go install golang.org/x/tools/cmd/goimports@latest
+
+  - name: goimports
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    env:
+      DIRS: ${{ inputs.dirs }}
+    run: |
+      set -xv
+
+      for subdir in ${DIRS}; do
+        echo "::subdir:: $subdir"
+        pushd $subdir
+
+        # We limit the depth to 3 mostly to avoid go.mod files that get pulled into `third_party` like some hashicorp repos.
+        for dir in $(find . -type d \( -path "*/third_party" -o -path "*/.terraform" \) -prune -o -name go.mod -exec dirname {} \;| sort ); do
+          echo "::group:: $dir"
+          pushd $dir
+          goimports -local="${{ inputs.local }}" -w \
+            $(find . \
+            -path './vendor' -prune \
+            -o -path '*/third_party' -prune \
+            -o -name '*.pb.go' -prune \
+            -o -name '*.pb.gw.go' -prune \
+            -o -name 'wire_gen.go' -prune \
+            -o -type f -name '*.go' -print)
+          popd
+          echo ::endgroup::
+        done
+
+        popd
+        echo ::endsubdir::
+      done
+
+  - name: Verify goimports
+    uses: khulnasoft/actions/nodiff@main
+    with:
+      fixup-command: "goimports"

@@ -1,13 +1,28 @@
 version: 2
 updates:
-  - package-ecosystem: github-actions
-    open-pull-requests-limit: 10
-    directory: /
-    commit-message:
-      prefix: chore
-      prefix-development: chore
-      include: scope
+
+  # workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: daily
-      time: "10:00"
-      timezone: America/Toronto
+      interval: "daily"
+  # boilerplate
+  - package-ecosystem: "github-actions"
+    directory: "/boilerplate"
+    schedule:
+      interval: "daily"
+  # digesta-bot
+  - package-ecosystem: "github-actions"
+    directory: "/digesta-bot"
+    schedule:
+      interval: "daily"
+  # donotsubmit
+  - package-ecosystem: "github-actions"
+    directory: "/donotsubmit"
+    schedule:
+      interval: "daily"
+  # kind-diag
+  - package-ecosystem: "github-actions"
+    directory: "/kind-diag"
+    schedule:
+      interval: "daily"
