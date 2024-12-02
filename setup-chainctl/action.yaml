@@ -44,11 +44,11 @@ runs:
       run: |
         echo "*****************************************************************"
         echo "**    This is deprecated and will be removed around Aug/2024   **"
-        echo "** please use https://github.com/khulnasoft/setup-chainctl **"
+        echo "** please use https://github.com/chainguard-dev/setup-chainctl **"
         echo "*****************************************************************"
         echo "::warning file=action.yml,line=1,col=0,endColumn=1::Action is deprecated, check the readme"
 
-    - uses: khulnasoft/setup-chainctl@58c1184bfdcf53576831252e68198d8df26f3e1b # v0.1.0
+    - uses: chainguard-dev/setup-chainctl@58c1184bfdcf53576831252e68198d8df26f3e1b # v0.1.0
       id: digesta
       with:
         environment: ${{ inputs.environment }}
