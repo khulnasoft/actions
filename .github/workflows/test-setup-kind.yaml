@@ -1,0 +1,108 @@
+name: setup-kind
+
+on:
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./
+
+concurrency:
+  group: test-github-action${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-github-action:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep running if one leg fails.
+      matrix:
+        k8s-version:
+        - 1.25.x
+        - 1.26.x
+        - 1.27.x
+        - 1.28.x
+        - 1.29.x
+        - 1.30.x
+
+        # See https://github.com/khulnasoft/actions/pull/175
+        # We're testing whether setting a custom cluster domain works
+        cluster-suffix:
+        - cluster.local # default value
+        - potato.local
+
+        include: 
+        - k8s-version: 1.25.x
+          knative-version: 1.11.0          
+        - k8s-version: 1.26.x
+          knative-version: 1.12.0
+        - k8s-version: 1.27.x
+          knative-version: 1.13.0
+        - k8s-version: 1.28.x
+          knative-version: 1.13.0
+        - k8s-version: 1.29.x
+          knative-version: 1.13.0
+        - k8s-version: 1.30.x
+          knative-version: 1.13.0
+
+    steps:
+    - uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+      with:
+        egress-policy: audit
+    - name: Checkout the current action
+      uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+    - uses: ./whereami # Log where I am.
+
+    - id: changed-kind
+      uses: tj-actions/changed-files@c3a1bb2c992d77180ae65be6ae6c166cf40f857c # v45.0.3
+      with:
+        files: |
+          ./setup-kind/**
+          ./setup-knative/**
+          .github/workflows/test-setup-kind.yaml
+
+    - name: setup-kind
+      if: steps.changed-kind.outputs.any_changed == 'true'
+      uses: ./setup-kind
+      with:
+        k8s-version: ${{ matrix.k8s-version }}
+        cluster-suffix: ${{ matrix.cluster-suffix }}
+
+    - name: check domain
+      if: steps.changed-kind.outputs.any_changed == 'true'
+      run: |
+        expected_value="${{ matrix.cluster-suffix }}"
+        dnsDomain=$(docker exec kind-control-plane cat /kind/kubeadm.conf | { grep dnsDomain || true; } | awk '{ print $2 }')
+
+        if [[ "${expected_value}" == "cluster.local" ]]; then
+          # the action doesn't explicitly set cluster.local - so we expect an empty value
+          if [[ -n "${dnsDomain}" ]]; then
+            echo "Cluster domain was set to '${dnsDomain}' instead of 'cluster.local'"
+            exit 1
+          fi
+        else
+          if [[ -z "${dnsDomain}" ]]; then
+              echo "Cluster domain was not set - expected: '${expected_value}'"
+              exit 1
+          elif [[ "${expected_value}" != "${dnsDomain}" ]]; then
+              echo "Cluster domain expected: '${expected_value}' - actual: '${dnsDomain}'"
+              exit 1
+          fi
+        fi
+
+    - name: Test spinning up Knative
+      if: ${{ steps.changed-kind.outputs.any_changed == 'true' }}
+      uses: ./setup-knative
+      with:
+        version: ${{ matrix.knative-version || 'latest' }}
+
+    - name: Collect diagnostics
+      if: ${{ failure() }}
+      uses: khulnasoft/actions/kind-diag@main
+      with:
+        artifact-name: logs.${{ matrix.k8s-version }}
