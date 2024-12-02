@@ -1,0 +1,28 @@
+name: test-matrix-extra-inputs
+
+on:
+  pull_request:
+
+jobs:
+  test_action:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+    - uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+      with:
+        egress-policy: audit
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+    - id: extra-inputs
+      uses: ./matrix-extra-inputs
+      with:
+        matrix-json: '{"x":1,"y":2}'
+      env:
+        EXTRA_INPUT_THIS_IS_EXAMPLE: hello
+        EXTRA_INPUT_THIS_IS_ALSO_EXAMPLE: world
+    - run: |
+        set -x
+        echo '${{ steps.extra-inputs.outputs.matrix-json }}' > input.json
+        [[ "$(jq -r .x input.json)" == "1" ]]
+        [[ "$(jq -r .y input.json)" == "2" ]]
+        [[ "$(jq -r .thisIsExample input.json)" == "hello" ]]
+        [[ "$(jq -r .thisIsAlsoExample input.json)" == "world" ]]
