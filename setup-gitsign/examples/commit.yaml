@@ -1,5 +1,4 @@
 name: New Commit
-description: This action makes a new local commit using Gitsign.
 on: [push]
 jobs:
   commit:
