@@ -1,0 +1,77 @@
+name: push-docker
+
+on:
+  workflow_call:
+    secrets:
+      TOKEN_DOCKERHUB:
+        description: Docker Hub API token
+        required: false
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+
+jobs:
+  metadata:
+    uses: ./.github/workflows/job-metadata.yml
+
+  lint-commits:
+    uses: ./.github/workflows/job-lint-commits.yml
+
+  lint-content:
+    uses: ./.github/workflows/job-lint-all.yml
+
+    permissions:
+      contents: write
+      statuses: write
+      pull-requests: write
+
+  release:
+    needs:
+      - metadata
+      - lint-commits
+      - lint-content
+
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+
+    if: ${{ needs.metadata.outputs.repository_default_branch == github.ref_name }}
+
+    uses: ./.github/workflows/job-semantic-release.yml
+
+  publish-strategy:
+    needs:
+      - release
+
+    if: ${{ needs.release.outputs.published == 'true' }}
+
+    uses: ./.github/workflows/job-load-matrix.yml
+
+    with:
+      matrix: .github/matrix-publish.json
+
+  publish-docker:
+    needs:
+      - release
+      - metadata
+      - publish-strategy
+
+    strategy:
+      matrix: ${{ fromJSON(needs.publish-strategy.outputs.matrix) }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    uses: ./.github/workflows/job-docker-build-push.yml
+    with:
+      name: ${{ matrix.registry.name || matrix.name || needs.metadata.outputs.repository_name }}
+      description: ${{ needs.metadata.outputs.repository_description }}
+      license: ${{ needs.metadata.outputs.license_spdx_id }}
+      version: ${{ needs.release.outputs.release-version }}
+      alias: ${{ needs.release.outputs.release-version-major }}
+      platforms: ${{ matrix.platforms }}
+      registry: ${{ matrix.registry.url }}
+    secrets:
+      password: ${{ matrix.registry.id == 'GITHUB' && secrets.GITHUB_TOKEN || secrets[format('TOKEN_{0}', matrix.registry.id)] }}

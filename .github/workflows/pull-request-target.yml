@@ -1,0 +1,17 @@
+name: pull-request-target
+
+on:
+  workflow_call:
+    secrets:
+      TOKEN_GITHUB:
+        description: GitHub Personal Access Token
+        required: true
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+
+jobs:
+  auto-merge:
+    uses: ./.github/workflows/job-auto-merge.yml
+    secrets:
+      TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}

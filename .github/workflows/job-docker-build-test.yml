@@ -1,0 +1,36 @@
+name: docker-build-test
+
+on:
+  workflow_call:
+    inputs:
+      platforms:
+        type: string
+        description: platform to publish
+        default: linux/amd64,linux/arm64
+        required: false
+
+      secrets:
+        type: string
+        description: List of secrets to expose to the build
+        required: false
+
+jobs:
+  docker-build-test:
+    timeout-minutes: 10
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.2.0
+      - uses: docker/setup-qemu-action@v3.2.0
+      - uses: docker/setup-buildx-action@v3.7.1
+
+      # test build
+      - uses: docker/build-push-action@v6.9.0
+        with:
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: ${{ inputs.platforms }}
+          tags: ${{ github.repository }}:test
+          secrets: ${{ inputs.secrets }}

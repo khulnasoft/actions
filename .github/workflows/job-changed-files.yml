@@ -1,0 +1,47 @@
+name: changed-files
+
+on:
+  workflow_call:
+    inputs:
+      pathspec:
+        description: "Pathspec to filter changed files"
+        required: false
+        default: "*"
+        type: string
+
+    outputs:
+      changed:
+        description: changed flag
+        value: ${{ jobs.changed-files.outputs.changed }}
+
+      files:
+        description: changed files
+        value: ${{ jobs.changed-files.outputs.files }}
+
+      json:
+        description: changed files as JSON
+        value: ${{ jobs.changed-files.outputs.json }}
+
+permissions:
+  contents: read
+
+jobs:
+  changed-files:
+    timeout-minutes: 5
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      changed: ${{ steps.main.outputs.changed }}
+      files: ${{ steps.main.outputs.files }}
+      json: ${{ steps.main.outputs.json }}
+
+    steps:
+      - uses: actions/checkout@v4.2.0
+        with:
+          fetch-depth: 0
+
+      - id: main
+        uses: khulnasoft-lab/action-changed-files@master
+        with:
+          pathspec: ${{ inputs.pathspec }}

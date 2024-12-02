@@ -1,0 +1,23 @@
+name: template-sync
+
+on:
+  workflow_call:
+    secrets:
+      TOKEN_GITHUB:
+        description: GitHub Personal Access Token
+        required: true
+
+jobs:
+  template-sync:
+    timeout-minutes: 5
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.2.0
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - uses: khulnasoft/action-template-sync@master
+        with:
+          github-token: ${{ secrets.TOKEN_GITHUB }}
