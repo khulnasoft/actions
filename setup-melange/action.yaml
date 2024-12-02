@@ -56,7 +56,7 @@ runs:
         case ${{ inputs.version }} in
         tip)
           TMP_CLONE_DIR="$(mktemp -d)"
-          git clone https://github.com/khulnasoft-lab/melange "${TMP_CLONE_DIR}"
+          git clone https://github.com/chainguard-dev/melange "${TMP_CLONE_DIR}"
           pushd "${TMP_CLONE_DIR}"
           make melange
           sudo env "PATH=$PATH" make install
@@ -64,7 +64,7 @@ runs:
           rm -rf "${TMP_CLONE_DIR}"
           ;;
         latest-release)
-          tag=$(curl -s -u "username:${{ github.token }}" https://api.github.com/repos/khulnasoft-lab/melange/releases/latest | jq -r '.tag_name')
+          tag=$(curl -s -u "username:${{ github.token }}" https://api.github.com/repos/chainguard-dev/melange/releases/latest | jq -r '.tag_name')
           ;;
         *)
           tag="${{ inputs.version }}"
@@ -90,7 +90,7 @@ runs:
 
           without_v=${tag#"v"}
           echo "Installing melange @ ${tag}"
-          curl -fsL https://github.com/khulnasoft-lab/melange/releases/download/${tag}/melange_${without_v}_${OS}_${ARCH}.tar.gz | sudo tar xzf - --strip-components=1 -C /usr/local/bin
+          curl -fsL https://github.com/chainguard-dev/melange/releases/download/${tag}/melange_${without_v}_${OS}_${ARCH}.tar.gz | sudo tar xzf - --strip-components=1 -C /usr/local/bin
         fi
 
         melange version
