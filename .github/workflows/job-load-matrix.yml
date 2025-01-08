@@ -1,6 +1,17 @@
 name: load-matrix
 
 on:
+  workflow_dispatch:
+    inputs:
+      matrix:
+        description: The matrix file name
+        required: true
+        type: string
+
+    outputs:
+      matrix:
+        description: The matrix content
+        value: ${{ jobs.load-matrix.outputs.matrix }}
   workflow_call:
     inputs:
       matrix:
