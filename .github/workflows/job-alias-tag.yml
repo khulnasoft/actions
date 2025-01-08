@@ -1,6 +1,17 @@
 name: alias-tag
 
 on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: tag name to use
+        required: true
+        type: string
+
+      sha:
+        description: The sha of the commit to use
+        required: true
+        type: string
   workflow_call:
     inputs:
       name:
