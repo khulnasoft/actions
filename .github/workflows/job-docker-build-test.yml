@@ -1,6 +1,18 @@
 name: docker-build-test
 
 on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        type: string
+        description: platform to publish
+        default: linux/amd64,linux/arm64
+        required: false
+
+      secrets:
+        type: string
+        description: List of secrets to expose to the build
+        required: false
   workflow_call:
     inputs:
       platforms:
