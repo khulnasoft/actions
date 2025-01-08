@@ -1,7 +1,7 @@
 name: Release GitHub Actions
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       tag:
         required: true
