@@ -1,0 +1,62 @@
+name: create_pr
+description: Create A Pull Request That will Trigger Workflows
+inputs:
+  base:
+    description: The Base Ref to apply the diff
+    required: false
+  body:
+    description: Optional body of the PR
+    required: false
+  commit-message:
+    description: Commit Message for the PR
+    required: true
+  branch:
+    description: The Branch to create for the PR
+    required: true
+  title:
+    description: PR title - defaults to commit-message
+    required: false
+  app_id:
+    description: Application ID used to make the PR
+    required: true
+  app_private_key:
+    description: Application Private Key used to sign the PR
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Has changes
+      id: dirty
+      uses: khulnasoft/actions/public/dirty@main
+
+    - name: Echo git_status
+      shell: bash
+      env:
+        STATUS: ${{ toJSON(steps.dirty.outputs) }}
+      run: echo "${{ env.git_status }}"
+
+    - name: Body
+      shell: bash
+      env:
+        git_body: ${{ inputs.body }}
+      run: |
+        echo "$git_body"
+
+    - uses: khulnasoft/actions/.github/actions/github-app-token@main
+      if: steps.dirty.outputs.isDirty
+      id: generate-token
+      with:
+        app_id: ${{ inputs.app_id }}
+        app_private_key: ${{ inputs.app_private_key }}
+
+    - name: Create Pull Request
+      if: steps.dirty.outputs.isDirty
+      uses: peter-evans/create-pull-request@v7.0.6
+      with:
+        commit-message: ${{ inputs.commit-message }}
+        branch: ${{ inputs.branch }}
+        base: ${{ inputs.base }}
+        title: ${{ inputs.title || inputs.commit-message }}
+        token: ${{ steps.generate-token.outputs.token }}
+        body: ${{ inputs.body }}
+        delete-branch: true
