@@ -3,7 +3,7 @@ name: ' 🔗 Update Dependencies Main'
 on:
   push:
     branches:
-      - release/v1
+      - v1
   workflow_dispatch:
     inputs:
       base:

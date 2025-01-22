@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - release/v1
+      - v1
   workflow_dispatch:
 
 jobs:
