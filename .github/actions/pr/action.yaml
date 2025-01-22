@@ -27,7 +27,7 @@ runs:
   steps:
     - name: Has changes
       id: dirty
-      uses: khulnasoft/actions/public/dirty@main
+      uses: khulnasoft/actions/public/dirty@v1
 
     - name: Echo git_status
       shell: bash
@@ -42,7 +42,7 @@ runs:
       run: |
         echo "$git_body"
 
-    - uses: khulnasoft/actions/.github/actions/github-app-token@main
+    - uses: khulnasoft/actions/.github/actions/github-app-token@v1
       if: steps.dirty.outputs.isDirty
       id: generate-token
       with:

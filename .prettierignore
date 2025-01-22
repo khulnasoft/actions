@@ -1,0 +1,14 @@
+.vscode/settings.json
+[sS]amples/
+[tT]emp/
+**/dist/**
+**/node_modules/**
+**/*-lock.yaml
+**/*-lock.json
+**/.docusaurus/**
+CHANGELOG.md
+coverage
+codetypo.json
+codetypo.schema.json
+tsconfig*.json
+**/action-build/**

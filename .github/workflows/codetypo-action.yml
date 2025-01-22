@@ -1,0 +1,19 @@
+name: '🔤 codetypo'
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  codetypo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: khulnasoft/codetypo-action@v6
+        with:
+          files: |
+            **
+            .*/**
+          incremental_files_only: false

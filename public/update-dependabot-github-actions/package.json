@@ -1,0 +1,31 @@
+{
+  "name": "update-dependabot-github-actions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.mjs --bundle --packages=bundle --platform=node --outfile=action-build/index.cjs",
+    "smoke-test": "env-cmd -f ./fixtures/env-request.json node ./action-build/index.cjs --cwd=../.. --debug",
+    "smoke-test-dbg": "env-cmd -f ./fixtures/env-request.json node ./src/index.mjs --cwd=../.. --debug",
+    "test": "echo OK"
+  },
+  "keywords": [],
+  "author": "KhulnaSoft Ltd",
+  "license": "MIT",
+  "devDependencies": {
+    "env-cmd": "^10.1.0",
+    "esbuild": "^0.24.2"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "glob": "^11.0.1",
+    "minimatch": "^9.0.5",
+    "nopt": "^8.0.0",
+    "yaml": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
