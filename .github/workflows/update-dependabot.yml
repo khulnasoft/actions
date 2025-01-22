@@ -3,13 +3,13 @@ name: ' 🤖 Update Dependabot 🤖'
 on:
   push:
     branches:
-      - v1
+      - release/v1
   workflow_dispatch:
     inputs:
       base:
         description: The Base Ref to apply the diff
         required: false
-        default: 'main'
+        default: 'release/main'
 
   schedule:
     - cron: '0 12 * * *'
