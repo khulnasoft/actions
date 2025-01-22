@@ -9,7 +9,7 @@ on:
       base:
         description: The Base Ref to apply the diff
         required: false
-        default: 'release/main'
+        default: 'release/v1'
 
   schedule:
     - cron: '0 12 * * *'
@@ -22,8 +22,8 @@ jobs:
     if: github.repository_owner == 'khulnasoft'
     runs-on: ubuntu-latest
     env:
-      NEW_BRANCH: update-dependabot-${{ inputs.base || 'main' }}
-      REF_BRANCH: ${{ inputs.base || 'main' }}
+      NEW_BRANCH: update-dependabot-${{ inputs.base || 'release/v1' }}
+      REF_BRANCH: ${{ inputs.base || 'release/v1' }}
       PR_TYPE: ci
     steps:
       - name: Checkout code
@@ -53,4 +53,4 @@ jobs:
           title: '${{ env.PR_TYPE }}: Workflow Bot -- Update dependabot.yml (${{ env.REF_BRANCH }})'
           body: ${{ steps.dependabot.outputs.summary }}
           app_id: ${{ secrets.AUTOMATION_APP_ID }}
-          app_private_key: ${{ secrets.AUTOMATION_PRIVATE_KEY }}
+          app_private_key: ${{ secrets.ORG_REPO_TOKEN }}
