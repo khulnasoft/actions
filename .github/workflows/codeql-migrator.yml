@@ -11,7 +11,6 @@ jobs:
       - uses: khulnasoft-lab/codeql-migrator@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Optional parameters:
           per-page: 10
           dry-run: false
           branch-name: 'update-codeql-v3'
