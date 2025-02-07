@@ -1,17 +1,24 @@
-name: Migrate CodeQL
+name: Run CodeQL Migrator
 on:
   schedule:
     - cron: '0 0 * * 1'  # Runs every Monday
-  workflow_dispatch:
-
+  workflow_dispatch:  # Allows manual triggering
 jobs:
-  migrate:
+  run-script:
     runs-on: ubuntu-latest
     steps:
-      - uses: khulnasoft-lab/codeql-migrator@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          per-page: 10
-          dry-run: false
-          branch-name: 'update-codeql-v3'
-          skip-cleanup: false
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install requests pyyaml github3.py
+
+      - name: Run Migration Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python migrator.py
