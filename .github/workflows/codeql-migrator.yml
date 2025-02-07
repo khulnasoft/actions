@@ -19,6 +19,6 @@ jobs:
         run: pip install requests pyyaml github3.py
 
       - name: Run Migration Script
+        uses: khulnasoft-lab/codeql-migrator@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python migrator.py
