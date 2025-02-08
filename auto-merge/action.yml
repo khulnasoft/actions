@@ -1,0 +1,33 @@
+name: "Auto Merge Dependabot & Renovate PRs"
+description: "Automatically approve and merge PRs from Dependabot and Renovate if checks pass."
+inputs:
+  token:
+    description: "GitHub Token"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Check PR author
+      id: check-author
+      shell: bash
+      run: |
+        AUTHOR=$(jq -r .pull_request.user.login "$GITHUB_EVENT_PATH")
+        if [[ "$AUTHOR" == "dependabot[bot]" || "$AUTHOR" == "renovate[bot]" ]]; then
+          echo "AUTHORIZED=true" >> $GITHUB_ENV
+        else
+          echo "AUTHORIZED=false" >> $GITHUB_ENV
+        fi
+
+    - name: Approve PR
+      if: env.AUTHORIZED == 'true'
+      shell: bash
+      run: gh pr review --approve "$GITHUB_REF"
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+
+    - name: Enable Auto-Merge
+      if: env.AUTHORIZED == 'true'
+      shell: bash
+      run: gh pr merge --auto --squash "$GITHUB_REF"
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
