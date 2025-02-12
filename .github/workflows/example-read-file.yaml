@@ -1,0 +1,31 @@
+name: '📗 Example Read File'
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run-example:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read a File
+        id: read-file
+        uses: khulnasoft/actions/public/read-file@v1
+        with:
+          # Relative to the root of the repository
+          path: 'README.md'
+
+      - name: Summary
+        uses: khulnasoft/actions/public/summary@v1
+        with:
+          text: |
+            # Summary
+            File:
+            ```````````markdown
+            ${{ steps.read-file.outputs.result }}
+            ```````````

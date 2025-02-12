@@ -1,28 +1,102 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
 version: 2
 updates:
+  - package-ecosystem: 'npm' # See documentation for possible values
+    directory: '/' # Location of package manifests
+    schedule:
+      interval: 'daily'
 
-  # workflows
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    # Workflow files stored in the
+    # default location of `.github/workflows`
+    directory: '/'
     schedule:
-      interval: "daily"
-  # boilerplate
-  - package-ecosystem: "github-actions"
-    directory: "/boilerplate"
+      interval: 'daily'
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: 'github-actions'
+    # Workflow files stored in the
+    # default location of `.github/workflows`
+    directory: '/.github/actions/github-app-token'
     schedule:
-      interval: "daily"
-  # digesta-bot
-  - package-ecosystem: "github-actions"
-    directory: "/digesta-bot"
+      interval: 'daily'
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: 'github-actions'
+    # Workflow files stored in the
+    # default location of `.github/workflows`
+    directory: '/.github/actions/pr'
     schedule:
-      interval: "daily"
-  # donotsubmit
-  - package-ecosystem: "github-actions"
-    directory: "/donotsubmit"
+      interval: 'daily'
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/update-dependabot-github-actions
     schedule:
-      interval: "daily"
-  # kind-diag
-  - package-ecosystem: "github-actions"
-    directory: "/kind-diag"
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/summary
     schedule:
-      interval: "daily"
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/output
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/dirty
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/setup-node-pnpm
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/diff
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/pr-body
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: fix
+
+  # Automatically added by khulnasoft/public/update-dependabot-github-actions
+  - package-ecosystem: github-actions
+    directory: /public/read-file
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: fix

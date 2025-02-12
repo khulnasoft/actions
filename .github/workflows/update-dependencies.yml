@@ -1,0 +1,71 @@
+name: ' 🔗 Update Dependencies Main'
+
+on:
+  push:
+    branches:
+      - release/v1
+  workflow_dispatch:
+    inputs:
+      base:
+        description: The Base Ref to apply the diff
+        required: false
+        default: 'main'
+
+  schedule:
+    - cron: '0 12 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  update-dependencies:
+    if: github.repository_owner == 'khulnasoft'
+    runs-on: ubuntu-latest
+    env:
+      NEW_BRANCH: update-dependencies-${{ inputs.base || 'main' }}
+      REF_BRANCH: ${{ inputs.base || 'main' }}
+      PR_TYPE: ci
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.REF_BRANCH }}
+
+      - name: Setup
+        uses: ./public/setup-node-pnpm
+
+      - name: Install
+        run: pnpm install
+
+      - name: Update packages
+        run: |
+          pnpm up
+          pnpm -r up
+
+      - name: Build
+        run: |
+          pnpm build
+          pnpm lint
+
+      - name: Gen Body
+        id: git-body
+        uses: ./public/pr-body
+        with:
+          title: Update ALL Dependencies ${{ env.REF_BRANCH }}
+          path: package.json
+
+      - name: PR
+        uses: ./.github/actions/pr
+        with:
+          commit-message: '${{ env.PR_TYPE }}: Workflow Bot -- Update ALL Dependencies'
+          branch: ${{ env.NEW_BRANCH }}
+          base: ${{ env.REF_BRANCH }}
+          title: '${{ env.PR_TYPE }}: Workflow Bot -- Update ALL Dependencies (${{ env.REF_BRANCH }})'
+          body: ${{ steps.git-body.outputs.body }}
+          app_id: ${{ secrets.AUTOMATION_APP_ID }}
+          app_private_key: ${{ secrets.AUTOMATION_PRIVATE_KEY }}
+
+      - name: Summary
+        uses: khulnasoft/actions/public/summary@v1
+        with:
+          text: ${{ steps.git-body.outputs.body }}

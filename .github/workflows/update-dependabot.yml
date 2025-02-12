@@ -1,0 +1,56 @@
+name: ' 🤖 Update Dependabot 🤖'
+
+on:
+  push:
+    branches:
+      - release/v1
+  workflow_dispatch:
+    inputs:
+      base:
+        description: The Base Ref to apply the diff
+        required: false
+        default: 'release/v1'
+
+  schedule:
+    - cron: '0 12 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  update-dependabot:
+    if: github.repository_owner == 'khulnasoft'
+    runs-on: ubuntu-latest
+    env:
+      NEW_BRANCH: update-dependabot-${{ inputs.base || 'release/v1' }}
+      REF_BRANCH: ${{ inputs.base || 'release/v1' }}
+      PR_TYPE: ci
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.REF_BRANCH }}
+
+      - name: Run Action
+        id: dependabot
+        uses: ./public/update-dependabot-github-actions
+        with:
+          directory: '{.github/actions,public}'
+          prefix: fix # Note we want them to be fixes since it impacts down stream consumers
+
+      - name: Echo Result
+        env:
+          SUMMARY: ${{ steps.dependabot.outputs.summary }}
+        run: |
+          echo "$SUMMARY"
+
+      - name: PR
+        uses: ./.github/actions/pr
+        with:
+          commit-message: '${{ env.PR_TYPE }}: Workflow Bot -- Update dependabot.yml'
+          branch: ${{ env.NEW_BRANCH }}
+          base: ${{ env.REF_BRANCH }}
+          title: '${{ env.PR_TYPE }}: Workflow Bot -- Update dependabot.yml (${{ env.REF_BRANCH }})'
+          body: ${{ steps.dependabot.outputs.summary }}
+          app_id: ${{ secrets.AUTOMATION_APP_ID }}
+          app_private_key: ${{ secrets.ORG_REPO_TOKEN }}

@@ -27,7 +27,7 @@ runs:
   steps:
     - name: Git Diff
       id: diff
-      uses: khulnasoft/actions/public/diff@main
+      uses: khulnasoft/actions/public/diff@v1
       if: inputs.path
       with:
         path: ${{ inputs.path }}
@@ -35,7 +35,7 @@ runs:
     - name: Section Diff
       id: section-diff
       if: inputs.path && steps.diff.outputs.diff
-      uses: khulnasoft/actions/public/output@main
+      uses: khulnasoft/actions/public/output@v1
       with:
         value: |
           ## Selected Diffs
@@ -53,7 +53,7 @@ runs:
 
     - name: Body
       id: body
-      uses: khulnasoft/actions/public/output@main
+      uses: khulnasoft/actions/public/output@v1
       with:
         value: |
           # ${{ inputs.title || 'Changes' }}
