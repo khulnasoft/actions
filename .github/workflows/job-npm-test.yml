@@ -41,7 +41,7 @@ jobs:
 
       - uses: khulnasoft-lab/action-dotenv@master
 
-      - uses: actions/setup-node@v4.0.4
+      - uses: actions/setup-node@v5.0.0
         with:
           registry-url: https://npm.pkg.github.com
           node-version: ${{ inputs.node-version }}
