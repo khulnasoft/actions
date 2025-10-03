@@ -40,7 +40,7 @@ jobs:
       repository_default_branch: ${{ steps.metadata.outputs.repository_default_branch }}
 
     steps:
-      - uses: actions/checkout@v4.2.0
+      - uses: actions/checkout@v5.0.0
 
       - id: metadata
         uses: khulnasoft-lab/action-metadata@master
