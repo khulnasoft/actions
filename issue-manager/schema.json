@@ -1,0 +1,39 @@
+{
+    "title": "Input_Config",
+    "type": "object",
+    "additionalProperties": {
+        "title": "KeywordMeta",
+        "type": "object",
+        "properties": {
+            "delay": {
+                "title": "Delay",
+                "default": 864000.0,
+                "type": "number",
+                "format": "time-delta"
+            },
+            "users": {
+                "title": "Users",
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "message": {
+                "title": "Message",
+                "default": "Assuming the original issue was solved, it will be automatically closed now.",
+                "type": "string"
+            },
+            "remove_label_on_comment": {
+                "title": "Remove Label On Comment",
+                "default": true,
+                "type": "boolean"
+            },
+            "remove_label_on_close": {
+                "title": "Remove Label On Close",
+                "default": false,
+                "type": "boolean"
+            }
+        }
+    }
+}

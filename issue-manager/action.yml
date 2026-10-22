@@ -1,0 +1,16 @@
+name: "Issue Manager Action"
+author: "Md Sulaiman <infosulaimanbd@gmail.com>"
+description: 'Close issues using special keywords after a period of time with a custom message'
+inputs:
+  token:
+    description: 'Token for the repo. Can be passed in using {{ secrets.GITHUB_TOKEN }}'
+    required: true
+  config:
+    description: 'JSON with settings as described in the README'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+branding:
+  icon: 'check-circle'  
+  color: 'green'
