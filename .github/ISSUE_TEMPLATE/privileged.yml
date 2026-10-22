@@ -5,8 +5,7 @@ body:
     attributes:
       value: |
         Thanks for your interest in this project! 🚀
-
-        If you are not @khulnasoft or he didn't ask you directly to create an issue here, please start the conversation in a [Question in GitHub Discussions](https://github.com/khulnasoft/label-approved/discussions/categories/questions) instead.
+        If you are not @khulnasoft or he didn't ask you directly to create an issue here, please start the conversation in a [Question in GitHub Discussions](https://github.com/khulnasoft/actions/discussions/categories/questions) instead.
   - type: checkboxes
     id: privileged
     attributes:
