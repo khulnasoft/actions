@@ -1,0 +1,20 @@
+name: Khulnasoft's Label Approved
+author: KhulnaSoft DevOps <info@khulnasoft.com>
+description: Add labels to approved Pull Requests
+inputs:
+  token:
+    description: Token for the repo. Can be passed in using {{ secrets.GITHUB_TOKEN }}
+    required: true
+  debug:
+    description: Use debug=True to enable more logging.
+    required: false
+    default: 'false'
+  config:
+    description: Add a custom config with other labels, number of approvals, etc.
+    required: false
+runs:
+  using: docker
+  image: Dockerfile
+branding:
+  icon: bookmark
+  color: green

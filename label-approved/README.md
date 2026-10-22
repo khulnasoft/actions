@@ -1,0 +1,143 @@
+# Label Approved
+
+Label PRs that have been approved a number of times.
+
+Inspired from [label-when-approved-action](https://github.com/abinoda/label-when-approved-action) but with support for PRs from forks.
+
+## How to use
+
+Install this GitHub action by creating a file in your repo at `.github/workflows/label-approved.yml`.
+
+A minimal example could be:
+
+```YAML
+name: Label Approved
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  label-approved:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: docker://khulnasoft/label-approved:0.0.4
+    # You can also use the action directly, but that will take about an extra minute:
+    # - uses: khulnasoft/label-approved@0.0.4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+This example uses the defaults configurations.
+
+It will run every night and check all the open PRs, for each PR with the label `awaiting-review`, it will check the approvals.
+
+If there are 2 or more approvals, it will remove the label `awaiting-review` and will add the label `approved-2`.
+
+## Configuration
+
+You can add different labels to apply.
+
+And for each label, you can specify:
+
+* `number`: the minimum number of approvals.
+* `await_label`: a label to filter the PRs. In the example above it is `awaiting-review` (the default when no configs are provided).
+    * If `await_label` is omitted or `null`, it will apply to all open PRs.
+
+These configs are passed as a JSON object, but as GitHub actions can only take strings as parameters, the JSON object has to be converted to a string.
+
+Check the next example...
+
+## Configuration Example
+
+Here's an example with 3 labels to apply, each with its own config.
+
+It's all inside of a single JSON config, passed as a multiline string.
+
+In YAML (this format) you can use `>` to declare that a string has multiple lines.
+
+```YAML
+name: Label Approved
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  label-approved:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: docker://khulnasoft/label-approved:0.0.4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        config: >
+          {
+            "approved-1":
+              {
+                "number": 1,
+                "await_label": "awaiting-review"
+              },
+            "omg 2 approved":
+              {
+                "number": 2,
+                "await_label": "only 2"
+              },
+            "approvals in 3D":
+              {
+                "number": 3
+              }
+          }
+```
+
+**Note**: Have in mind that after the `>` the multiline has to have at least one more level of indentation than the key `config` above.
+
+Here's what this config will do:
+
+Check each open PR, and:
+
+* Apply the label `approved-1` to open PRs with:
+    * 1 approval (or more).
+    * The label `awaiting-review` (removing it afterwards).
+* Apply the label `omg 2 approved` to open PRs with:
+    * 2 approvals (or more).
+    * The label `only 2` (removing it afterwards).
+* Apply the label `approvals in 3D` to open PRs with:
+    * 3 approvals (or more).
+    * `await_label` was not declared, so, any open PR will match.
+
+## Release Notes
+
+### Latest Changes
+
+### 0.0.4
+
+#### Refactors
+
+* ♻️ Rename default label from "awaiting review" to "awaiting-review". PR [#16](https://github.com/khulnasoft/label-approved/pull/16) by [@khulnasoft](https://github.com/khulnasoft).
+
+### 0.0.3
+
+### Fixes
+
+* ♻️ Upgrade Pydantic version and logic to handle GitHub providing env vars even without values. PR [#15](https://github.com/khulnasoft/label-approved/pull/15) by [@khulnasoft](https://github.com/khulnasoft).
+
+#### Internal
+
+* 🔧 Add funding. PR [#13](https://github.com/khulnasoft/label-approved/pull/13) by [@khulnasoft](https://github.com/khulnasoft).
+* 👷 Add dependabot. PR [#8](https://github.com/khulnasoft/label-approved/pull/8) by [@khulnasoft](https://github.com/khulnasoft).
+* 👷 Add latest-changes GitHub Action. PR [#7](https://github.com/khulnasoft/label-approved/pull/7) by [@khulnasoft](https://github.com/khulnasoft).
+
+### 0.0.2
+
+* 🐛 Fix approved user count logic. PR [#6](https://github.com/khulnasoft/label-approved/pull/6) by [@khulnasoft](https://github.com/khulnasoft).
+* 🐛 Fix Python app name to be called in Docker. PR [#5](https://github.com/khulnasoft/label-approved/pull/5) by [@khulnasoft](https://github.com/khulnasoft).
+* ⬆️ Upgrade GitHub Action Latest Changes. PR [#4](https://github.com/khulnasoft/label-approved/pull/4) by [@khulnasoft](https://github.com/khulnasoft).
+* 🐛 Fix logic to compute the number of approvals, count only last approval per user. PR [#3](https://github.com/khulnasoft/label-approved/pull/3) by [@khulnasoft](https://github.com/khulnasoft).
+
+### 0.0.1
+
+First release 🎉
+
+## License
+
+This project is licensed under the terms of the MIT license.

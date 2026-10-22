@@ -1,0 +1,17 @@
+name: Label Approved
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  issues: write
+
+jobs:
+  label-approved:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: khulnasoft/label-approved@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        debug: true
