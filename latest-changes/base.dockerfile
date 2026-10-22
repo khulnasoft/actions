@@ -1,15 +1,14 @@
-FROM python:3.10-slim
+FROM python:3.14-slim
 
-# Slim doesn't have git, install it manually
-RUN apt-get update && apt-get install -y \
-    git \
+RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./requirements.txt /app/requirements.txt
+WORKDIR /app
 
-RUN pip install -r /app/requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./latest_changes /app/latest_changes
+COPY latest_changes/ ./latest_changes/
 
 ENV PYTHONPATH=/app
 

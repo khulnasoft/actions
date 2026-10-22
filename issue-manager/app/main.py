@@ -1,38 +1,42 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 from github import Github
+from github.Auth import Token
 from github.Issue import Issue
 from github.IssueEvent import IssueEvent
-from pydantic import BaseModel, SecretStr, validator
-from pydantic_settings import BaseSettings, SettingsConfigDict, SettingsConfigDict
+from pydantic import BaseModel, SecretStr, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class KeywordMeta(BaseModel):
     delay: timedelta = timedelta(days=10)
-    message: str = (
-        "Assuming the original need was handled, this will be automatically closed now."
-    )
+    message: str = "Assuming the original need was handled, this will be automatically closed now."
     remove_label_on_comment: bool = True
     remove_label_on_close: bool = False
 
 
+def discard_schema(v: object) -> object:
+    """Remove the $schema key from a config dict."""
+    if isinstance(v, dict) and "$schema" in v:
+        del v["$schema"]
+    return v
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_ignore_empty=True)
-    
-    input_config: Dict[str, KeywordMeta]
+
+    input_config: dict[str, KeywordMeta]
     github_repository: str
     input_token: SecretStr
     github_event_path: Path
-    github_event_name: Optional[str] = None
+    github_event_name: str | None = None
 
-    @validator("input_config", pre=True)
-    def discard_schema(cls, v):
-        if "$schema" in v:
-            del v["$schema"]
-        return v
+    @field_validator("input_config", mode="before")
+    @classmethod
+    def _discard_schema(cls, v: object) -> object:
+        return discard_schema(v)
 
 
 class PartialGitHubEventIssue(BaseModel):
@@ -40,38 +44,39 @@ class PartialGitHubEventIssue(BaseModel):
 
 
 class PartialGitHubEvent(BaseModel):
-    issue: Optional[PartialGitHubEventIssue] = None
-    pull_request: Optional[PartialGitHubEventIssue] = None
+    issue: PartialGitHubEventIssue | None = None
+    pull_request: PartialGitHubEventIssue | None = None
 
 
-def get_last_interaction_date(issue: Issue) -> Optional[datetime]:
-    last_date: Optional[datetime] = None
-    comments = list(issue.get_comments())
+def get_last_interaction_date(issue: Issue) -> datetime | None:
+    last_date: datetime | None = None
+    comments: list = list(issue.get_comments())
+    interaction_dates: list[datetime] = []
     if issue.pull_request:
         pr = issue.as_pull_request()
         commits = list(pr.get_commits())
         reviews = list(pr.get_reviews())
         pr_comments = list(pr.get_comments())
-        interactions = comments + pr_comments
-        interaction_dates = [
-            interaction.created_at for interaction in interactions
-        ]
+        interactions = list(comments) + list(pr_comments)
+        interaction_dates = [interaction.created_at for interaction in interactions]
         interaction_dates.extend(
-            [commit.commit.author.date for commit in commits]
+            commit.commit.author.date
+            for commit in commits
+            if commit.commit.author and commit.commit.author.date
         )
-        interaction_dates.extend([review.submitted_at for review in reviews])
+        interaction_dates.extend(
+            review.submitted_at for review in reviews if review.submitted_at is not None
+        )
     else:
         interactions = comments
         interaction_dates = [interaction.created_at for interaction in interactions]
     for item_date in interaction_dates:
-        if not last_date:
-            last_date = item_date
-        elif item_date > last_date:
+        if not last_date or item_date > last_date:
             last_date = item_date
     return last_date
 
 
-def get_labeled_events(events: List[IssueEvent]) -> List[IssueEvent]:
+def get_labeled_events(events: list[IssueEvent]) -> list[IssueEvent]:
     labeled_events = []
     for event in events:
         if event.event == "labeled":
@@ -79,10 +84,8 @@ def get_labeled_events(events: List[IssueEvent]) -> List[IssueEvent]:
     return labeled_events
 
 
-def get_last_event_for_label(
-    *, labeled_events: List[IssueEvent], label: str
-) -> Optional[IssueEvent]:
-    last_event: Optional[IssueEvent] = None
+def get_last_event_for_label(*, labeled_events: list[IssueEvent], label: str) -> IssueEvent | None:
+    last_event: IssueEvent | None = None
     for event in labeled_events:
         if event.label and event.label.name == label:
             if not last_event:
@@ -94,16 +97,13 @@ def get_last_event_for_label(
 
 
 def close_issue(
-    *, issue: Issue, keyword_meta: KeywordMeta, keyword: str, label_strs: Set[str]
+    *, issue: Issue, keyword_meta: KeywordMeta, keyword: str, label_strs: set[str]
 ) -> None:
-    logging.info(
-        f"Clossing issue: #{issue.number} with message: {keyword_meta.message}"
-    )
+    logging.info(f"Closing issue: #{issue.number} with message: {keyword_meta.message}")
     issue.create_comment(keyword_meta.message)
     issue.edit(state="closed")
-    if keyword_meta.remove_label_on_close:
-        if keyword in label_strs:
-            issue.remove_from_labels(keyword)
+    if keyword_meta.remove_label_on_close and keyword in label_strs:
+        issue.remove_from_labels(keyword)
 
 
 def process_issue(*, issue: Issue, settings: Settings) -> None:
@@ -112,23 +112,15 @@ def process_issue(*, issue: Issue, settings: Settings) -> None:
     events = list(issue.get_events())
     labeled_events = get_labeled_events(events)
     last_date = get_last_interaction_date(issue)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for keyword, keyword_meta in settings.input_config.items():
         # Check closable delay, if enough time passed and the issue could be closed
-        closable_delay = (
-            last_date is None or (now - keyword_meta.delay) > last_date
-        )
+        closable_delay = last_date is None or (now - keyword_meta.delay) > last_date
         # Check label, optionally removing it if there's a comment after adding it
         if keyword in label_strs:
             logging.info(f'Keyword: "{keyword}" in issue labels')
-            keyword_event = get_last_event_for_label(
-                labeled_events=labeled_events, label=keyword
-            )
-            if (
-                last_date
-                and keyword_event
-                and last_date > keyword_event.created_at
-            ):
+            keyword_event = get_last_event_for_label(labeled_events=labeled_events, label=keyword)
+            if last_date and keyword_event and last_date > keyword_event.created_at:
                 logging.info(
                     f"Not closing as the last comment was written after adding the "
                     f'label: "{keyword}"'
@@ -146,17 +138,17 @@ def process_issue(*, issue: Issue, settings: Settings) -> None:
                 break
             else:
                 logging.info(
-                    f"Not clossing issue: #{issue.number} as the delay hasn't been reached: {keyword_meta.delay}"
+                    f"Not closing issue: #{issue.number} as the delay hasn't been reached: {keyword_meta.delay}"
                 )
 
 
-if __name__ == "__main__":
+def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    settings = Settings()
-    logging.info(f"Using config: {settings.json()}")
-    g = Github(settings.input_token.get_secret_value())
+    settings = Settings()  # type: ignore[call-arg]
+    logging.info(f"Using config: {settings.model_dump_json()}")
+    g = Github(auth=Token(settings.input_token.get_secret_value()))
     repo = g.get_repo(settings.github_repository)
-    github_event: Optional[PartialGitHubEvent] = None
+    github_event: PartialGitHubEvent | None = None
     if settings.github_event_path.is_file():
         contents = settings.github_event_path.read_text()
         github_event = PartialGitHubEvent.model_validate_json(contents)
@@ -166,7 +158,7 @@ if __name__ == "__main__":
         or settings.github_event_name == "issue_comment"
     ):
         if github_event:
-            issue_number: Optional[int] = None
+            issue_number: int | None = None
             if github_event.issue:
                 issue_number = github_event.issue.number
             elif github_event.pull_request:
@@ -176,7 +168,11 @@ if __name__ == "__main__":
                 if issue.state == "open":
                     process_issue(issue=issue, settings=settings)
     else:
-        for keyword, keyword_meta in settings.input_config.items():
+        for keyword, _keyword_meta in settings.input_config.items():
             for issue in repo.get_issues(state="open", labels=[keyword]):
                 process_issue(issue=issue, settings=settings)
     logging.info("Finished")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,5 @@
 [tool.ruff]
-target-version = "py313"
+target-version = "py314"
 line-length = 100
 src = ["issue-manager", "label-approved", "latest-changes"]
 
@@ -11,7 +11,7 @@ ignore = ["E501"]
 known-first-party = ["app", "label_approved", "latest_changes"]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -19,10 +19,10 @@ check_untyped_defs = true
 no_implicit_optional = true
 strict_optional = true
 files = ["issue-manager", "label-approved", "latest-changes"]
+exclude = ["(?x)(^|/)tests/"]
 
 [tool.pytest.ini_options]
-testpaths = ["issue-manager/tests", "label-approved/tests", "latest-changes/tests"]
-addopts = "-ra -q"
+addopts = "-ra -q --import-mode=importlib"
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

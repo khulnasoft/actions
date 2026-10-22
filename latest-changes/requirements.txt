@@ -1,6 +1,6 @@
-PyGithub
-pydantic>=2.0.0
-pydantic-settings
+PyGithub>=2.3.0,<3.0.0
+pydantic>=2.0.0,<3.0.0
+pydantic-settings>=2.0.0,<3.0.0
 httpx>=0.15.5,<0.29.0
-email-validator
-Jinja2
+email-validator>=2.0.0
+Jinja2>=3.1.0

@@ -1,39 +1,40 @@
 {
-    "title": "Input_Config",
-    "type": "object",
-    "additionalProperties": {
-        "title": "KeywordMeta",
-        "type": "object",
-        "properties": {
-            "delay": {
-                "title": "Delay",
-                "default": 864000.0,
-                "type": "number",
-                "format": "time-delta"
-            },
-            "users": {
-                "title": "Users",
-                "default": [],
-                "type": "array",
-                "items": {
-                    "type": "string"
-                }
-            },
-            "message": {
-                "title": "Message",
-                "default": "Assuming the original issue was solved, it will be automatically closed now.",
-                "type": "string"
-            },
-            "remove_label_on_comment": {
-                "title": "Remove Label On Comment",
-                "default": true,
-                "type": "boolean"
-            },
-            "remove_label_on_close": {
-                "title": "Remove Label On Close",
-                "default": false,
-                "type": "boolean"
-            }
+  "title": "Input_Config",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/KeywordMeta"
+  },
+  "definitions": {
+    "KeywordMeta": {
+      "title": "KeywordMeta",
+      "type": "object",
+      "properties": {
+        "delay": {
+          "title": "Delay",
+          "description": "Delay before closing. Accepts seconds (number) or an ISO-8601 duration string (e.g. P3DT12H30M5S).",
+          "anyOf": [
+            { "type": "number" },
+            { "type": "string" }
+          ],
+          "default": 864000.0,
+          "format": "time-delta"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string",
+          "default": "Assuming the original need was handled, this will be automatically closed now."
+        },
+        "remove_label_on_comment": {
+          "title": "Remove Label On Comment",
+          "type": "boolean",
+          "default": true
+        },
+        "remove_label_on_close": {
+          "title": "Remove Label On Close",
+          "type": "boolean",
+          "default": false
         }
+      }
     }
+  }
 }

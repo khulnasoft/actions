@@ -1,1 +1,1 @@
-FROM khulnasoft/latest-changes:0.3.2
+FROM khulnasoft/actions-latest-changes:0.4.0

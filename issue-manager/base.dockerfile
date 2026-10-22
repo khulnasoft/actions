@@ -1,11 +1,12 @@
-FROM python:3.10-slim
+FROM python:3.14-slim
 
-COPY ./requirements.txt /code/requirements.txt
+WORKDIR /app
 
-RUN pip install -r /code/requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./app /code/app
+COPY app/ ./app/
 
-ENV PYTHONPATH=/code/app
+ENV PYTHONPATH=/app
 
-CMD ["python", "/code/app/main.py"]
+CMD ["python", "/app/app/main.py"]

@@ -1,11 +1,12 @@
 import logging
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Union
 
 from github import Github
+from github.Auth import Token
 from github.PullRequest import PullRequest
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel, SecretStr
@@ -17,6 +18,7 @@ COMMIT_MESSAGE = """
 [skip ci]
 """.strip()
 
+
 class Section(BaseModel):
     label: str
     header: str
@@ -25,14 +27,14 @@ class Section(BaseModel):
 class Settings(BaseSettings):
     github_repository: str
     github_event_path: Path
-    github_event_name: Optional[str] = None
+    github_event_name: str | None = None
     input_token: SecretStr
     input_latest_changes_file: Path = Path("README.md")
     input_latest_changes_header: str = "### Latest Changes"
     input_template_file: Path = Path(__file__).parent / "latest-changes.jinja2"
     input_end_regex: str = "(^### .*)|(^## .*)"
-    input_debug_logs: Optional[bool] = False
-    input_labels: List[Section] = [
+    input_debug_logs: bool | None = False
+    input_labels: list[Section] = [
         Section(label="breaking", header="Breaking Changes"),
         Section(label="security", header="Security Fixes"),
         Section(label="feature", header="Features"),
@@ -52,8 +54,8 @@ class PartialGitHubEventInputs(BaseModel):
 
 
 class PartialGitHubEvent(BaseModel):
-    number: Optional[int] = None
-    inputs: Optional[PartialGitHubEventInputs] = None
+    number: int | None = None
+    inputs: PartialGitHubEventInputs | None = None
 
 
 class TemplateDataUser(BaseModel):
@@ -82,12 +84,12 @@ def generate_content(
     *,
     content: str,
     settings: Settings,
-    pr: Union[PullRequest, TemplateDataPR],
+    pr: PullRequest | TemplateDataPR,
     labels: list[str],
 ) -> str:
     """
     Generates updated release notes by inserting a rendered pull request message.
-    
+
     This function takes the current release notes and updates them by rendering a
     message from a Jinja2 template using the pull request data. It first locates a
     header in the release notes based on a regex from the settings, then renders the
@@ -95,20 +97,18 @@ def generate_content(
     previously added, extracts release note sections according to configured labels,
     and inserts the new message into the appropriate section or into the sectionless
     content. Finally, it reassembles and returns the updated release notes content.
-    
+
     Args:
         content: The current release notes content.
         settings: A Settings instance containing configuration parameters such as file
             paths, header regex patterns, and label definitions.
         pr: A pull request object or TemplateDataPR providing data for template rendering.
         labels: A list of label identifiers indicating which sections should be updated.
-    
+
     Returns:
         The updated release notes content as a string.
     """
-    header_match = re.search(
-        settings.input_latest_changes_header, content, flags=re.MULTILINE
-    )
+    header_match = re.search(settings.input_latest_changes_header, content, flags=re.MULTILINE)
     if not header_match:
         raise RuntimeError(
             f"The latest changes file at: {settings.input_latest_changes_file} doesn't seem to contain the header RegEx: {settings.input_latest_changes_header}"
@@ -116,23 +116,19 @@ def generate_content(
     template_content = settings.input_template_file.read_text("utf-8")
     env = Environment(
         loader=FileSystemLoader(searchpath=str(settings.input_template_file.parent)),
-        autoescape=select_autoescape(['html', 'xml'])
+        autoescape=select_autoescape(["html", "xml"]),
     )
     template = env.from_string(template_content)
     message = template.render(pr=pr)
     if message in content:
-        raise RuntimeError(
-            f"It seems these PR's latest changes were already added: {pr.number}"
-        )
+        raise RuntimeError(f"It seems these PR's latest changes were already added: {pr.number}")
     pre_header_content = content[: header_match.end()].strip()
     post_header_content = content[header_match.end() :].strip()
     next_release_match = re.search(
         settings.input_end_regex, post_header_content, flags=re.MULTILINE
     )
     release_end = (
-        len(content)
-        if not next_release_match
-        else header_match.end() + next_release_match.start()
+        len(content) if not next_release_match else header_match.end() + next_release_match.start()
     )
     release_content = content[header_match.end() : release_end].strip()
     post_release_content = content[release_end:].strip()
@@ -208,13 +204,16 @@ def generate_content(
         new_release_content = updated_content
 
     new_content = (
-        f"{pre_header_content}\n\n{new_release_content}\n\n{post_release_content}".strip()
-        + "\n"
+        f"{pre_header_content}\n\n{new_release_content}\n\n{post_release_content}".strip() + "\n"
     )
     return new_content
 
 
 def main() -> None:
+    git_bin = shutil.which("git")
+    if not git_bin:
+        logging.error("git executable not found")
+        sys.exit(1)
     # Ref: https://github.com/actions/runner/issues/2033
     logging.info(
         "GitHub Actions workaround for git in containers, ref: https://github.com/actions/runner/issues/2033"
@@ -223,10 +222,10 @@ def main() -> None:
     dotgitconfig_path = Path.home() / ".gitconfig"
     dotgitconfig_path.write_text(safe_directory_config_content)
 
-    settings = Settings()
+    settings = Settings()  # type: ignore[call-arg]
     if settings.input_debug_logs:
-        logging.info(f"Using config: {settings.json()}")
-    g = Github(settings.input_token.get_secret_value())
+        logging.info(f"Using config: {settings.model_dump_json()}")
+    g = Github(auth=Token(settings.input_token.get_secret_value()))
     repo = g.get_repo(settings.github_repository)
     if not settings.github_event_path.is_file():
         logging.error(f"No event file was found at: {settings.github_event_path}")
@@ -256,16 +255,15 @@ def main() -> None:
     logging.info("Setting up GitHub Actions git user")
     subprocess.run([git_bin, "config", "user.name", "github-actions[bot]"], check=True)
     subprocess.run(
-        [git_bin, "config", "user.email", "github-actions[bot]@users.noreply.github.com"], check=True
+        [git_bin, "config", "user.email", "github-actions[bot]@users.noreply.github.com"],
+        check=True,
     )
     number_of_trials = 10
     logging.info(f"Number of trials (for race conditions): {number_of_trials}")
     for trial in range(number_of_trials):
         logging.info(f"Running trial: {trial}")
-        logging.info(
-            "Pulling the latest changes, including the latest merged PR (this one)"
-        )
-        subprocess.run(["git", "pull"], check=True)
+        logging.info("Pulling the latest changes, including the latest merged PR (this one)")
+        subprocess.run([git_bin, "pull"], check=True)
         content = settings.input_latest_changes_file.read_text()
 
         new_content = generate_content(
@@ -276,18 +274,16 @@ def main() -> None:
         )
         settings.input_latest_changes_file.write_text(new_content)
         logging.info(f"Committing changes to: {settings.input_latest_changes_file}")
-        subprocess.run(
-            ["git", "add", str(settings.input_latest_changes_file)], check=True
-        )
-        subprocess.run(["git", "commit", "-m", COMMIT_MESSAGE], check=True)
+        subprocess.run([git_bin, "add", str(settings.input_latest_changes_file)], check=True)
+        subprocess.run([git_bin, "commit", "-m", COMMIT_MESSAGE], check=True)
         logging.info(f"Pushing changes: {settings.input_latest_changes_file}")
 
-        result = subprocess.run(["git", "push"])
+        result = subprocess.run([git_bin, "push"])
         if result.returncode == 0:
             break
         # Didn't work, race condition, reset to try again
         logging.info("That didn't work, resetting before trying again")
-        subprocess.run(["git", "reset", "HEAD^1"], check=True)
-        subprocess.run(["git", "checkout", "."], check=True)
+        subprocess.run([git_bin, "reset", "HEAD^1"], check=True)
+        subprocess.run([git_bin, "checkout", "."], check=True)
 
     logging.info("Finished")

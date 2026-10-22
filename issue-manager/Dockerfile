@@ -1,1 +1,1 @@
-FROM khulnasoft/issue-manager:0.5.1
+FROM khulnasoft/actions-issue-manager:0.6.0

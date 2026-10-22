@@ -1,0 +1,30 @@
+name: Issue Manager
+
+on:
+  schedule:
+    - cron: "15 13 * * *"
+  issue_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  issue-manager:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run issue-manager
+        uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config: >
+            {
+              "answered": {"delay": 864000},
+              "waiting": {"delay": 2628000}
+            }
