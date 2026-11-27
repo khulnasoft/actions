@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 
-ACTIONS = ["issue-manager", "label-approved", "latest-changes"]
+ACTIONS = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 PYPROJECT_VERSION_RE = re.compile(r'(?m)^version = "(\d+\.\d+\.\d+)"$')

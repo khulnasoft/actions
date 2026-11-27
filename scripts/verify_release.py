@@ -22,7 +22,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-ACTIONS = ("issue-manager", "label-approved", "latest-changes")
+ACTIONS = ("issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit")
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 

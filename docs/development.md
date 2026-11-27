@@ -2,7 +2,7 @@
 
 ## Repository layout
 
-This is a monorepo containing three independent GitHub Actions. Each action
+This is a monorepo containing five independent GitHub Actions. Each action
 lives in its own top-level directory and is released independently:
 
 | Action | Directory | Version file | Git tag |
@@ -10,6 +10,8 @@ lives in its own top-level directory and is released independently:
 | Issue Manager | `issue-manager/` | `issue-manager/version.txt` | `issue-manager/vX.Y.Z` |
 | Label Approved | `label-approved/` | `label-approved/version.txt` | `label-approved/vX.Y.Z` |
 | Latest Changes | `latest-changes/` | `latest-changes/version.txt` | `latest-changes/vX.Y.Z` |
+| PR Push | `pr-push/` | `pr-push/version.txt` | `pr-push/vX.Y.Z` |
+| PR Submit | `pr-submit/` | `pr-submit/version.txt` | `pr-submit/vX.Y.Z` |
 
 See [architecture.md](architecture.md) for the full architecture and
 [migration.md](migration.md) for the migration policy from the old

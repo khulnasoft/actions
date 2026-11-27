@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-ACTIONS = ["issue-manager", "label-approved", "latest-changes"]
+ACTIONS = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 VALID_RUNS_USING = {"docker", "node12", "node16", "node20", "node24", "composite"}
 VALID_BRANDING_ICONS = {
     "activity",

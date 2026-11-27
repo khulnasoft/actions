@@ -1,14 +1,14 @@
 [tool.ruff]
 target-version = "py314"
 line-length = 100
-src = ["issue-manager", "label-approved", "latest-changes"]
+src = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "label_approved", "latest_changes"]
+known-first-party = ["app", "label_approved", "latest_changes", "pr_push", "pr_submit"]
 
 [tool.ruff.lint.per-file-ignores]
 "latest-changes/tests/test_generate_content.py" = ["RUF001"]
@@ -21,7 +21,7 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 no_implicit_optional = true
 strict_optional = true
-files = ["issue-manager", "label-approved", "latest-changes"]
+files = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 exclude = ["(?x)(^|/)tests/"]
 
 [tool.pytest.ini_options]
@@ -31,7 +31,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.coverage.run]
-source = ["issue-manager", "label-approved", "latest-changes"]
+source = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 omit = ["*/tests/*", "*/__main__.py"]
 
 [tool.coverage.report]

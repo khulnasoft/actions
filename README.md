@@ -9,6 +9,8 @@ GitHub Actions by [KhulnaSoft Ltd](https://github.com/khulnasoft).
 | [issue-manager](issue-manager/) | Close issues/PRs carrying a label after a configurable idle delay | `issue-manager/v0.6.0` |
 | [label-approved](label-approved/) | Label PRs based on how many approvals they have received | `label-approved/v0.1.0` |
 | [latest-changes](latest-changes/) | Automatically add PR changes to release notes in a Markdown file | `latest-changes/v0.4.0` |
+| [pr-push](pr-push/) | Get a short-lived, repository-scoped GitHub App token for pushing from pull request workflows | `pr-push/v0.0.1` |
+| [pr-submit](pr-submit/) | Get a short-lived, repository-scoped GitHub App token for scheduled or manually dispatched workflows | `pr-submit/v0.0.1` |
 
 ## Usage
 
@@ -18,6 +20,8 @@ Each action is referenced by its subdirectory path and a path-scoped tag:
 - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
 - uses: khulnasoft/actions/label-approved@label-approved/v0.1.0
 - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
+- uses: khulnasoft/actions/pr-push@pr-push/v0.0.1
+- uses: khulnasoft/actions/pr-submit@pr-submit/v0.0.1
 ```
 
 See each action's README for detailed inputs, examples, and migration notes.

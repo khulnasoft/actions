@@ -27,5 +27,9 @@ repos:
           - Jinja2
           - email-validator
           - types-requests
+          - fastapi
+          - pyjwt
+          - pyyaml
+          - types-PyYAML
         pass_filenames: false
-        args: [issue-manager, label-approved, latest-changes]
+        args: [issue-manager, label-approved, latest-changes, pr-push, pr-submit]

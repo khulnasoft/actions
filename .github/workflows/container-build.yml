@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        action: [issue-manager, label-approved, latest-changes]
+        action: [issue-manager, label-approved, latest-changes, pr-push, pr-submit]
         platform: [linux/amd64, linux/arm64]
     steps:
       - name: Checkout
@@ -59,6 +59,8 @@ jobs:
             issue-manager) SMOKE_IMPORT="app.main" ;;
             label-approved) SMOKE_IMPORT="label_approved.__main__" ;;
             latest-changes) SMOKE_IMPORT="latest_changes.main" ;;
+            pr-push) SMOKE_IMPORT="pr_push.main" ;;
+            pr-submit) SMOKE_IMPORT="pr_submit.main" ;;
             *) echo "Unknown action: $ACTION" >&2; exit 1 ;;
           esac
           docker run --rm --entrypoint python "actions-smoke-${ACTION}:latest" \
@@ -71,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        action: [issue-manager, label-approved, latest-changes]
+        action: [issue-manager, label-approved, latest-changes, pr-push, pr-submit]
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

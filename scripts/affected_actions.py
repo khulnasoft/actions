@@ -9,7 +9,7 @@ configuration, or multiple actions affect all actions.
 import json
 import sys
 
-ACTIONS = ["issue-manager", "label-approved", "latest-changes"]
+ACTIONS = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 
 # Paths that affect every action's test environment.
 SHARED_FILES = {"pyproject.toml", "requirements-dev.txt"}

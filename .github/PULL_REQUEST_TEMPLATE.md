@@ -4,7 +4,7 @@
 
 ## Action(s) affected
 
-<!-- e.g. issue-manager, label-approved, latest-changes, or repo tooling only -->
+<!-- e.g. issue-manager, label-approved, latest-changes, pr-push, pr-submit, or repo tooling only -->
 
 ## Checklist
 

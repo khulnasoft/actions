@@ -11,6 +11,8 @@ on:
           - issue-manager
           - label-approved
           - latest-changes
+          - pr-push
+          - pr-submit
       bump:
         description: "Version bump type"
         required: true

@@ -1,0 +1,16 @@
+name: Get PR Push token
+author: Md Sulaiman <ceo@khulnasoft.com>
+description: Get a short-lived, repository-scoped PR Push token.
+inputs:
+  url:
+    description: URL of the deployed PR Push service.
+    default: https://pr-push.khulnasoft.com
+outputs:
+  token:
+    description: GitHub App installation token.
+runs:
+  using: docker
+  image: Dockerfile
+branding:
+  icon: git-commit
+  color: blue
