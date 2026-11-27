@@ -80,6 +80,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
@@ -124,6 +126,63 @@ jobs:
           provenance: mode=max
           sbom: true
 
+      - name: Generate SBOM for published image
+        uses: anchore/sbom-action@dfcb83b97731532d72be422cbc51ee64adb6fd56 # v0.24.4
+        with:
+          image: ghcr.io/khulnasoft/actions/${{ needs.prepare.outputs.action }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom-${{ needs.prepare.outputs.action }}.spdx.json
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Attest GHCR image
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/khulnasoft/actions/${{ needs.prepare.outputs.action }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest Docker Hub image
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: docker.io/khulnasoft/actions-${{ needs.prepare.outputs.action }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest SBOM
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: sbom-${{ needs.prepare.outputs.action }}.spdx.json
+
+      - name: Create release manifest
+        env:
+          ACTION: ${{ needs.prepare.outputs.action }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SHA: ${{ needs.prepare.outputs.sha }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python scripts/release_manifest.py \
+            --action "$ACTION" --version "$VERSION" --commit "$SHA" \
+            --image "khulnasoft/actions-$ACTION:$VERSION=$DIGEST" \
+            --image "ghcr.io/khulnasoft/actions/$ACTION:$VERSION=$DIGEST" \
+            --sbom "sbom-$ACTION.spdx.json" \
+            --run-url "$RUN_URL" \
+            --output "release-manifest-$ACTION.json"
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-assets-${{ needs.prepare.outputs.action }}
+          path: |
+            release-manifest-${{ needs.prepare.outputs.action }}.json
+            sbom-${{ needs.prepare.outputs.action }}.spdx.json
+          if-no-files-found: error
+          retention-days: 90
+
   tag-and-release:
     name: Create tag & GitHub Release
     needs: [prepare, build-and-publish]
@@ -161,6 +220,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      attestations: read
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -224,3 +284,43 @@ jobs:
             echo "$IMG matches pushed digest ${DIGEST}."
           done
           echo "Images published for ${ACTION}:${VERSION} match digest ${DIGEST}."
+
+      - name: Download release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-assets-${{ needs.prepare.outputs.action }}
+          path: release-assets
+
+      - name: Independent release verification
+        env:
+          ACTION: ${{ needs.prepare.outputs.action }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SHA: ${{ needs.prepare.outputs.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python scripts/verify_release.py \
+            --action "$ACTION" \
+            --version "$VERSION" \
+            --expect-commit "$SHA" \
+            --manifest "release-assets/release-manifest-$ACTION.json" \
+            --attest
+
+  release-assets:
+    name: Attach manifest & SBOM to release
+    needs: [prepare, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-assets-${{ needs.prepare.outputs.action }}
+          path: release-assets
+
+      - name: Attach assets to GitHub Release
+        uses: softprops/action-gh-release@72f2c25fcb47643ad5814036f1f03b3c8e958c58 # v2.3.2
+        with:
+          tag_name: ${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}
+          files: release-assets/*

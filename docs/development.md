@@ -72,7 +72,7 @@ of a version is published. See [releases.md](releases.md).
 | Workflow | Trigger | Purpose |
 |---|---|---|
 | `ci.yml` | PR / push to `main` | Lint, typecheck, tests for affected actions; metadata and version validation |
-| `container-build.yml` | PR / push to `main` | Build all `base.dockerfile` images (amd64 + arm64) and smoke test |
+| `container-build.yml` | PR / push to `main`; manual dispatch | Build all `base.dockerfile` images (amd64 + arm64) and smoke test; dispatch runs a report-only reproducibility check |
 | `actionlint.yml` | PR / push touching `.github/workflows/` | Workflow syntax linting |
 | `publish-release.yml` | Manual dispatch | Release one action: bump version, publish images, tag, release notes |
 | `security.yml` | PR, weekly schedule, manual | Dependency/secret/IaC/image scanning, SBOM, workflow audit, deduped issue reporting |

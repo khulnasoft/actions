@@ -5,6 +5,13 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to build for the reproducibility check"
+        required: false
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -56,3 +63,67 @@ jobs:
           esac
           docker run --rm --entrypoint python "actions-smoke-${ACTION}:latest" \
             -c "import $SMOKE_IMPORT; print('smoke ok:', '$SMOKE_IMPORT')"
+
+  repro-check:
+    name: Reproducibility check (${{ matrix.action }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        action: [issue-manager, label-approved, latest-changes]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c23212 # v3.10.0
+
+      - name: Build twice without cache
+        env:
+          ACTION: ${{ matrix.action }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2; do
+            docker buildx build \
+              --file "$ACTION/base.dockerfile" \
+              --platform linux/amd64 \
+              --no-cache \
+              --load \
+              --tag "repro-$ACTION-$attempt:latest" \
+              "$ACTION"
+            docker inspect --format '{{.Id}} {{json .RootFS.Layers}}' \
+              "repro-$ACTION-$attempt:latest" > "layers-$attempt.txt"
+          done
+
+      - name: Compare layer digests
+        env:
+          ACTION: ${{ matrix.action }}
+          REF: ${{ inputs.ref || 'main' }}
+        run: |
+          set -uo pipefail
+          ID1=$(cut -d' ' -f1 layers-1.txt)
+          ID2=$(cut -d' ' -f1 layers-2.txt)
+          LAYERS1=$(cut -d' ' -f2- layers-1.txt)
+          LAYERS2=$(cut -d' ' -f2- layers-2.txt)
+          {
+            echo "### Reproducibility: $ACTION @ $REF"
+            echo
+            echo "- Image ID build 1: \`$ID1\`"
+            echo "- Image ID build 2: \`$ID2\`"
+            if [ "$LAYERS1" = "$LAYERS2" ]; then
+              echo "- RootFS layer diff_ids: **identical**"
+              echo
+              echo "Layers are reproducible for this ref; image config"
+              echo "timestamps may still differ, so registry digests can vary."
+            else
+              echo "- RootFS layer diff_ids: **differ**"
+              echo
+              echo "Layer content is not bit-for-bit reproducible for this ref"
+              echo "(expected while the base image tag floats and pip resolves"
+              echo "versions at build time). See docs/provenance.md."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

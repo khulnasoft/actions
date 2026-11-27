@@ -124,3 +124,64 @@ def test_security_findings_clean_report_writes_nothing(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert "count=0" in result.stdout
     assert not out.exists()
+
+
+def test_release_manifest_roundtrip(tmp_path: Path) -> None:
+    digest = "sha256:" + "ab" * 32
+    commit = "cd" * 20
+    sbom = tmp_path / "sbom-issue-manager.spdx.json"
+    sbom.write_text('{"spdxVersion": "SPDX-2.3"}\n')
+    out = tmp_path / "release-manifest-issue-manager.json"
+    result = run_script(
+        "release_manifest.py",
+        [
+            "--action",
+            "issue-manager",
+            "--version",
+            "0.6.1",
+            "--commit",
+            commit,
+            "--image",
+            f"khulnasoft/actions-issue-manager:0.6.1={digest}",
+            "--image",
+            f"ghcr.io/khulnasoft/actions/issue-manager:0.6.1={digest}",
+            "--sbom",
+            str(sbom),
+            "--run-url",
+            "https://example.com/run/1",
+            "--output",
+            str(out),
+        ],
+    )
+    assert result.returncode == 0, result.stderr
+    manifest = json.loads(out.read_text())
+    assert manifest["schema"] == "khulnasoft/release-manifest/v1"
+    assert manifest["tag"] == "issue-manager/v0.6.1"
+    assert manifest["commit"] == commit
+    assert manifest["images"]["ghcr.io/khulnasoft/actions/issue-manager:0.6.1"] == digest
+    assert manifest["sbom"]["format"] == "spdx-json"
+    assert len(manifest["sbom"]["sha256"]) == 64
+
+
+def test_release_manifest_rejects_bad_input(tmp_path: Path) -> None:
+    out = tmp_path / "m.json"
+    base = [
+        "--action",
+        "issue-manager",
+        "--version",
+        "0.6.1",
+        "--output",
+        str(out),
+    ]
+    bad_commit = run_script(
+        "release_manifest.py",
+        [*base, "--commit", "notasha", "--image", "img=sha256:" + "ab" * 32],
+    )
+    assert bad_commit.returncode == 2
+    bad_digest = run_script(
+        "release_manifest.py",
+        [*base, "--commit", "cd" * 20, "--image", "img=not-a-digest"],
+    )
+    assert bad_digest.returncode == 2
+    no_images = run_script("release_manifest.py", [*base, "--commit", "cd" * 20])
+    assert no_images.returncode == 2
