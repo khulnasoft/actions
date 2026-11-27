@@ -75,6 +75,8 @@ of a version is published. See [releases.md](releases.md).
 | `container-build.yml` | PR / push to `main` | Build all `base.dockerfile` images (amd64 + arm64) and smoke test |
 | `actionlint.yml` | PR / push touching `.github/workflows/` | Workflow syntax linting |
 | `publish-release.yml` | Manual dispatch | Release one action: bump version, publish images, tag, release notes |
+| `security.yml` | PR, weekly schedule, manual | Dependency/secret/IaC/image scanning, SBOM, workflow audit, deduped issue reporting |
+| `dependency-review.yml` | PR | Dependency risk review on changes |
 
 CI detects which actions are affected by a change (`scripts/affected_actions.py`).
 Changes under an action directory only test that action; changes to shared

@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Detect affected actions
         id: detect
@@ -59,6 +60,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -66,25 +69,34 @@ jobs:
           python-version: "3.14"
 
       - name: Install dependencies
+        env:
+          ACTION: ${{ matrix.action }}
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-          pip install -r ${{ matrix.action }}/requirements.txt
-          pip install -r ${{ matrix.action }}/requirements-test.txt
+          pip install -r "$ACTION/requirements.txt"
+          pip install -r "$ACTION/requirements-test.txt"
 
       - name: Ruff lint
-        run: ruff check ${{ matrix.action }}
+        env:
+          ACTION: ${{ matrix.action }}
+        run: ruff check "$ACTION"
 
       - name: Ruff format check
-        run: ruff format --check ${{ matrix.action }}
+        env:
+          ACTION: ${{ matrix.action }}
+        run: ruff format --check "$ACTION"
 
       - name: mypy
-        run: mypy ${{ matrix.action }}
+        env:
+          ACTION: ${{ matrix.action }}
+        run: mypy "$ACTION"
 
       - name: pytest
         env:
+          ACTION: ${{ matrix.action }}
           PYTHONPATH: ${{ matrix.action }}
-        run: pytest ${{ matrix.action }}/tests --cov=${{ matrix.action }} --cov-report=xml --import-mode=importlib
+        run: pytest "$ACTION/tests" --cov="$ACTION" --cov-report=xml --import-mode=importlib
 
       - name: Upload coverage
         if: always()
@@ -99,6 +111,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0

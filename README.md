@@ -28,6 +28,7 @@ See each action's README for detailed inputs, examples, and migration notes.
 - [Migration guide](docs/migration.md) — moving from the old single-action repositories
 - [Development guide](docs/development.md) — local setup, CI, adding a new action
 - [Release guide](docs/releases.md) — versioning, cutting a release, rollback
+- [Security automation](docs/security.md) — scanning coverage, findings flow, repo settings
 - [Contributing](CONTRIBUTING.md)
 - [Examples](examples/) — ready-to-use workflow files for each action
 

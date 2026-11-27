@@ -3,11 +3,11 @@ name: Issue Manager
 on:
   schedule:
     - cron: "15 13 * * *"
-  issue_comment:
+  issue_comment: # zizmor: ignore[dangerous-triggers]
     types: [created]
   issues:
     types: [labeled]
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [labeled]
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run issue-manager
-        uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
+        uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0 # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: >

@@ -80,3 +80,47 @@ def test_affected_actions_deleted_and_renamed_paths() -> None:
     )
     assert result.returncode == 0
     assert json.loads(result.stdout) == ["issue-manager", "label-approved"]
+
+
+def test_security_findings_pip_audit(tmp_path: Path) -> None:
+    report = tmp_path / "pip-audit.json"
+    report.write_text(
+        json.dumps(
+            {
+                "dependencies": [
+                    {
+                        "name": "foo",
+                        "version": "1.0",
+                        "vulns": [
+                            {
+                                "id": "PYSEC-1",
+                                "fix_versions": ["1.1"],
+                                "aliases": [],
+                                "description": "test",
+                            }
+                        ],
+                    },
+                    {"name": "bar", "version": "2.0", "vulns": []},
+                ],
+                "fixes": [],
+            }
+        )
+    )
+    out = tmp_path / "findings.md"
+    result = run_script(
+        "security_findings.py",
+        ["pip-audit", str(report), str(out), "--name", "issue-manager"],
+    )
+    assert result.returncode == 0
+    assert "count=1" in result.stdout
+    assert "PYSEC-1" in out.read_text()
+
+
+def test_security_findings_clean_report_writes_nothing(tmp_path: Path) -> None:
+    report = tmp_path / "zizmor.sarif"
+    report.write_text(json.dumps({"runs": [{"results": []}]}))
+    out = tmp_path / "findings.md"
+    result = run_script("security_findings.py", ["zizmor", str(report), str(out)])
+    assert result.returncode == 0
+    assert "count=0" in result.stdout
+    assert not out.exists()

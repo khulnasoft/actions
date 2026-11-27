@@ -20,21 +20,21 @@ on:
           - minor
           - major
 
-permissions:
-  contents: write
-  packages: write
+permissions: {}
 
 jobs:
   prepare:
     name: Prepare release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.prepare.outputs.version }}
       action: ${{ steps.prepare.outputs.action }}
       sha: ${{ steps.commit.outputs.sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2 # zizmor: ignore[artipacked]  # credentials required to push
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -43,23 +43,32 @@ jobs:
 
       - name: Prepare release
         id: prepare
+        env:
+          ACTION: ${{ inputs.action }}
+          BUMP: ${{ inputs.bump }}
         run: |
-          python scripts/prepare_release.py prepare --action ${{ inputs.action }} --bump ${{ inputs.bump }}
-          VERSION=$(python scripts/prepare_release.py current --action ${{ inputs.action }})
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "action=${{ inputs.action }}" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          python scripts/prepare_release.py prepare --action "$ACTION" --bump "$BUMP"
+          VERSION=$(python scripts/prepare_release.py current --action "$ACTION")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
 
       - name: Validate
-        run: |
-          python scripts/prepare_release.py check --action ${{ inputs.action }}
+        env:
+          ACTION: ${{ inputs.action }}
+        run: python scripts/prepare_release.py check --action "$ACTION"
 
       - name: Commit changes
         id: commit
+        env:
+          ACTION: ${{ inputs.action }}
+          VERSION: ${{ steps.prepare.outputs.version }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ${{ inputs.action }}/version.txt ${{ inputs.action }}/Dockerfile ${{ inputs.action }}/README.md README.md
-          git commit -m "chore(${{ inputs.action }}): release v${{ steps.prepare.outputs.version }}"
+          git add "$ACTION/version.txt" "$ACTION/Dockerfile" "$ACTION/README.md" README.md
+          git commit -m "chore($ACTION): release v$VERSION"
           git push
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
@@ -68,6 +77,9 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      contents: read
+      packages: write
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
@@ -75,6 +87,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
@@ -115,18 +128,22 @@ jobs:
     name: Create tag & GitHub Release
     needs: [prepare, build-and-publish]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2 # zizmor: ignore[artipacked]  # credentials required to push
         with:
           ref: ${{ needs.prepare.outputs.sha }}
           fetch-depth: 0
 
       - name: Create and push tag
+        env:
+          TAG: ${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          TAG="${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}"
           git tag "$TAG"
           git push origin "$TAG"
 
@@ -141,11 +158,15 @@ jobs:
     name: Verify tag, commit, and images
     needs: [prepare, build-and-publish, tag-and-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Docker Buildx
@@ -203,4 +224,3 @@ jobs:
             echo "$IMG matches pushed digest ${DIGEST}."
           done
           echo "Images published for ${ACTION}:${VERSION} match digest ${DIGEST}."
-
