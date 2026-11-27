@@ -189,9 +189,7 @@ def test_existing_labels_same_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -243,9 +241,7 @@ def test_existing_label_other_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -300,9 +296,7 @@ def test_existing_label_secondary_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["bug"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["bug"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -355,9 +349,7 @@ def test_no_existing_label_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -410,9 +402,7 @@ def test_no_existing_label_release_label_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -467,9 +457,7 @@ def test_custom_label_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -526,9 +514,7 @@ def test_sectionless_content_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -597,9 +583,7 @@ def test_content_above_latest_changes():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -987,9 +971,7 @@ def test_multiple_header_sections_label():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["docs"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["docs"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -1070,9 +1052,7 @@ def test_first_change_with_extra_header():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(
@@ -1127,9 +1107,7 @@ def test_first_release_existing_content_with_extra_header():
         html_url="https://example.com/pr/42",
         user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
     )
-    new_content = generate_content(
-        content=content, settings=settings, pr=pr, labels=["feature"]
-    )
+    new_content = generate_content(content=content, settings=settings, pr=pr, labels=["feature"])
     assert (
         new_content
         == inspect.cleandoc(

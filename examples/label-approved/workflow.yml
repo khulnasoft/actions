@@ -1,0 +1,21 @@
+name: Label Approved
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  issues: write
+
+jobs:
+  label-approved:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: khulnasoft/actions/label-approved@label-approved/v0.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config: >
+            {
+              "approved-1": {"number": 1, "await_label": "awaiting-review"},
+              "approved-2": {"number": 2, "await_label": "awaiting-review"}
+            }

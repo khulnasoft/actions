@@ -3,9 +3,7 @@
 
 import argparse
 import re
-import subprocess
 import sys
-from datetime import date
 from pathlib import Path
 
 ACTIONS = ["issue-manager", "label-approved", "latest-changes"]
@@ -42,12 +40,26 @@ def get_current_version(action: str) -> str:
     return content
 
 
+README_VERSION_ROW_RE = re.compile(
+    r"(?m)^\| \[[^\]]+\]\([^)]+\) \| [^|]+ \| `([a-z-]+)/v(\d+\.\d+\.\d+)` \|$"
+)
+
+
 def check(action: str | None = None) -> int:
     """Validate version/pin/ref consistency. Returns 0 on success."""
     actions = [action] if action else ACTIONS
     errors = []
     for a in actions:
         ver = get_current_version(a)
+        # Check root README version table row
+        root_readme = Path("README.md")
+        if root_readme.exists():
+            content = root_readme.read_text()
+            rows = {m.group(1): m.group(2) for m in README_VERSION_ROW_RE.finditer(content)}
+            if a in rows and rows[a] != ver:
+                errors.append(f"README.md version table lists {a} at {rows[a]}, expected {ver}")
+            elif a not in rows:
+                errors.append(f"README.md version table is missing a row for {a}")
         # Check Dockerfile pin
         df = Path(a) / "Dockerfile"
         if df.exists():
@@ -102,6 +114,16 @@ def prepare(action: str, bump: str) -> str:
             content,
         )
         readme.write_text(content)
+    # Update root README version table and usage examples
+    root_readme = Path("README.md")
+    if root_readme.exists():
+        content = root_readme.read_text()
+        content = re.sub(
+            rf"({re.escape(action)}/v){re.escape(current)}",
+            rf"\g<1>{new_version}",
+            content,
+        )
+        root_readme.write_text(content)
     print(f"Prepared {action} release: {current} -> {new_version}")
     return new_version
 

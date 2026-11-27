@@ -35,6 +35,22 @@ jobs:
           file: ./${{ matrix.action }}/base.dockerfile
           platforms: ${{ matrix.platform }}
           push: false
+          load: ${{ matrix.platform == 'linux/amd64' }}
+          tags: actions-smoke-${{ matrix.action }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Smoke test image
+        if: matrix.platform == 'linux/amd64'
+        env:
+          ACTION: ${{ matrix.action }}
+        run: |
+          set -euo pipefail
+          case "$ACTION" in
+            issue-manager) SMOKE_IMPORT="app.main" ;;
+            label-approved) SMOKE_IMPORT="label_approved.__main__" ;;
+            latest-changes) SMOKE_IMPORT="latest_changes.main" ;;
+            *) echo "Unknown action: $ACTION" >&2; exit 1 ;;
+          esac
+          docker run --rm --entrypoint python "actions-smoke-${ACTION}:latest" \
+            -c "import $SMOKE_IMPORT; print('smoke ok:', '$SMOKE_IMPORT')"

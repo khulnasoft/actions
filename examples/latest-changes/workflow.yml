@@ -1,0 +1,26 @@
+name: Latest Changes
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      number:
+        description: "PR number"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  latest-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          latest_changes_header: "### Latest Changes"

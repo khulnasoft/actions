@@ -10,13 +10,52 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect affected actions
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      any: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Detect affected actions
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE="$PR_BASE"
+          else
+            BASE="$PUSH_BEFORE"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            MATRIX=$(git ls-files | python scripts/affected_actions.py)
+          else
+            MATRIX=$(git diff --name-only --no-renames "$BASE"...HEAD | python scripts/affected_actions.py)
+          fi
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          if [ "$MATRIX" = "[]" ]; then
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+
   lint-and-test:
     name: Lint & Test (${{ matrix.action }})
+    needs: changes
+    if: needs.changes.outputs.any == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        action: [issue-manager, label-approved, latest-changes]
+        action: ${{ fromJSON(needs.changes.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -66,14 +105,16 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
       - name: Validate action.yml files
-        run: |
-          for d in issue-manager label-approved latest-changes; do
-            echo "Validating $d/action.yml"
-            python -c "import yaml,sys; yaml.safe_load(open('$d/action.yml'))" || exit 1
-          done
+        run: python scripts/validate_metadata.py
 
-      - name: Check version/pin consistency
-        run: |
-          python scripts/prepare_release.py --check 2>/dev/null || echo "prepare_release.py not yet implemented; skipping"
+      - name: Check version/pin/ref consistency
+        run: python scripts/prepare_release.py check
 
+      - name: Run repository tests
+        run: python -m pytest tests/ -q

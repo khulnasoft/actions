@@ -10,6 +10,9 @@ ignore = ["E501"]
 [tool.ruff.lint.isort]
 known-first-party = ["app", "label_approved", "latest_changes"]
 
+[tool.ruff.lint.per-file-ignores]
+"latest-changes/tests/test_generate_content.py" = ["RUF001"]
+
 [tool.mypy]
 python_version = "3.14"
 warn_return_any = true

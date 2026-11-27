@@ -31,6 +31,7 @@ jobs:
     outputs:
       version: ${{ steps.prepare.outputs.version }}
       action: ${{ steps.prepare.outputs.action }}
+      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -53,21 +54,27 @@ jobs:
           python scripts/prepare_release.py check --action ${{ inputs.action }}
 
       - name: Commit changes
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ${{ inputs.action }}/version.txt ${{ inputs.action }}/Dockerfile ${{ inputs.action }}/README.md
+          git add ${{ inputs.action }}/version.txt ${{ inputs.action }}/Dockerfile ${{ inputs.action }}/README.md README.md
           git commit -m "chore(${{ inputs.action }}): release v${{ steps.prepare.outputs.version }}"
           git push
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   build-and-publish:
     name: Build & publish image
     needs: prepare
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
@@ -89,6 +96,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push versioned image
+        id: build
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
           context: ./${{ needs.prepare.outputs.action }}
@@ -110,6 +118,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
 
       - name: Create and push tag
         run: |
@@ -125,4 +136,71 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}
           name: ${{ needs.prepare.outputs.action }} v${{ needs.prepare.outputs.version }}
           generate_release_notes: true
+
+  verify:
+    name: Verify tag, commit, and images
+    needs: [prepare, build-and-publish, tag-and-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c23212 # v3.10.0
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Git tag points at release commit
+        env:
+          TAG: ${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}
+          SHA: ${{ needs.prepare.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          TAG_SHA=$(git rev-parse "refs/tags/${TAG}")
+          test "$TAG_SHA" = "$SHA"
+          echo "Tag ${TAG} points at release commit ${SHA}."
+
+      - name: Verify published image digests
+        env:
+          ACTION: ${{ needs.prepare.outputs.action }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          DIGEST: ${{ needs.build-and-publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          for IMG in \
+            "khulnasoft/actions-${ACTION}:${VERSION}" \
+            "ghcr.io/khulnasoft/actions/${ACTION}:${VERSION}"; do
+            MATCHED=0
+            for attempt in 1 2 3 4 5; do
+              if OUT=$(docker buildx imagetools inspect "$IMG" 2>&1) && \
+                 echo "$OUT" | grep -q "$DIGEST"; then
+                MATCHED=1
+                break
+              fi
+              echo "Attempt $attempt for $IMG did not match yet; retrying in 15s..."
+              sleep 15
+            done
+            if [ "$MATCHED" != "1" ]; then
+              echo "ERROR: $IMG digest does not match pushed digest $DIGEST" >&2
+              echo "$OUT" >&2
+              exit 1
+            fi
+            echo "$IMG matches pushed digest ${DIGEST}."
+          done
+          echo "Images published for ${ACTION}:${VERSION} match digest ${DIGEST}."
 

@@ -33,7 +33,7 @@ jobs:
   issue-manager:
     runs-on: ubuntu-latest
     steps:
-      - uses: khulnasoft/issue-manager@0.5.1
+      - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: '{"answered": {}}'
@@ -224,7 +224,7 @@ jobs:
   issue-manager:
     runs-on: ubuntu-latest
     steps:
-      - uses: khulnasoft/issue-manager@0.5.1
+      - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: >
@@ -256,7 +256,7 @@ You can start your JSON config file with:
 
 ```JSON
 {
-    "$schema": "https://raw.githubusercontent.com/khulnasoft/issue-manager/master/schema.json"
+    "$schema": "https://raw.githubusercontent.com/khulnasoft/actions/main/issue-manager/schema.json"
 }
 ```
 
@@ -294,12 +294,12 @@ jobs:
   issue-manager:
     runs-on: ubuntu-latest
     steps:
-      - uses: khulnasoft/issue-manager@0.5.1
+      - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: >
             {
-                "$schema": "https://raw.githubusercontent.com/khulnasoft/issue-manager/master/schema.json",
+                "$schema": "https://raw.githubusercontent.com/khulnasoft/actions/main/issue-manager/schema.json",
                 "answered": {
                     "delay": "P3DT12H30M5S",
                     "message": "It seems the issue was answered, closing this now.",

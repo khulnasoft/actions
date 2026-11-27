@@ -46,17 +46,21 @@ def approved_count(reviews: list[Any]) -> int:
     return sum(1 for review in review_by_user.values() if review.state == "APPROVED")
 
 
-def apply_config(pr: Any, config: dict[str, LabelSettings], approved_reviews_count: int) -> list[str]:
+def apply_config(
+    pr: Any, config: dict[str, LabelSettings], approved_reviews_count: int
+) -> list[str]:
     """Apply label rules to a PR. Returns list of labels applied."""
     applied: list[str] = []
     pr_labels = list(pr.get_labels())
     pr_label_by_name = {label.name: label for label in pr_labels}
     for approved_label, conf in config.items():
-        if (conf.await_label is None or conf.await_label in pr_label_by_name) and approved_reviews_count >= conf.number:
-                pr.add_to_labels(approved_label)
-                applied.append(approved_label)
-                if conf.await_label:
-                    pr.remove_from_labels(conf.await_label)
+        if (
+            conf.await_label is None or conf.await_label in pr_label_by_name
+        ) and approved_reviews_count >= conf.number:
+            pr.add_to_labels(approved_label)
+            applied.append(approved_label)
+            if conf.await_label:
+                pr.remove_from_labels(conf.await_label)
     return applied
 
 

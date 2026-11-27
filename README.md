@@ -22,6 +22,15 @@ Each action is referenced by its subdirectory path and a path-scoped tag:
 
 See each action's README for detailed inputs, examples, and migration notes.
 
+## Documentation
+
+- [Architecture](docs/architecture.md) — repository layout, build contexts, tagging, registries
+- [Migration guide](docs/migration.md) — moving from the old single-action repositories
+- [Development guide](docs/development.md) — local setup, CI, adding a new action
+- [Release guide](docs/releases.md) — versioning, cutting a release, rollback
+- [Contributing](CONTRIBUTING.md)
+- [Examples](examples/) — ready-to-use workflow files for each action
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
