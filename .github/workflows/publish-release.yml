@@ -209,11 +209,15 @@ jobs:
           git push origin "$TAG"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
-        with:
-          tag_name: ${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}
-          name: ${{ needs.prepare.outputs.action }} v${{ needs.prepare.outputs.version }}
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTION: ${{ needs.prepare.outputs.action }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "$ACTION/v$VERSION" \
+            --title "$ACTION v$VERSION" \
+            --generate-notes
 
   verify:
     name: Verify tag, commit, and images
@@ -322,7 +326,10 @@ jobs:
           path: release-assets
 
       - name: Attach assets to GitHub Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
-        with:
-          tag_name: ${{ needs.prepare.outputs.action }}/v${{ needs.prepare.outputs.version }}
-          files: release-assets/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTION: ${{ needs.prepare.outputs.action }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release upload "$ACTION/v$VERSION" release-assets/* --clobber
