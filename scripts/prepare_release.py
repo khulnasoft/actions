@@ -74,7 +74,10 @@ def check(action: str | None = None) -> int:
         readme = Path(a) / "README.md"
         if readme.exists():
             content = readme.read_text()
-            for m in re.finditer(r"khulnasoft/actions/[a-z-]+@[a-z-]+/v(\d+\.\d+\.\d+)", content):
+            for m in re.finditer(
+                r"(?:khulnasoft|mdselim606570-cloud)/actions/[a-z-]+@[a-z-]+/v(\d+\.\d+\.\d+)",
+                content,
+            ):
                 if m.group(1) != ver:
                     errors.append(f"{a}/README.md references version {m.group(1)}, expected {ver}")
     if errors:

@@ -40,7 +40,7 @@ jobs:
       - name: Build (no push)
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
-          context: ./${{ matrix.action }}
+          context: .
           file: ./${{ matrix.action }}/base.dockerfile
           platforms: ${{ matrix.platform }}
           push: false
@@ -96,7 +96,7 @@ jobs:
               --no-cache \
               --load \
               --tag "repro-$ACTION-$attempt:latest" \
-              "$ACTION"
+              .
             docker inspect --format '{{.Id}} {{json .RootFS.Layers}}' \
               "repro-$ACTION-$attempt:latest" > "layers-$attempt.txt"
           done

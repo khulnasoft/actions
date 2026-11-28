@@ -2,12 +2,19 @@ import inspect
 from typing import Any, cast
 
 import pytest
+from pydantic import ValidationError
 
 from latest_changes.main import (
+    AlreadyAddedError,
+    ConfigurationError,
+    MissingHeaderError,
     Settings,
     TemplateDataPR,
     TemplateDataUser,
     generate_content,
+    render_message,
+    validate_settings,
+    write_outputs,
 )
 
 
@@ -1134,3 +1141,124 @@ def test_first_release_existing_content_with_extra_header():
         )
         + "\n"
     )
+
+
+def test_render_message_matches_template():
+    settings = Settings(
+        github_repository="khulnasoft/latest-changes",
+        github_event_path="event.json",
+        input_token="secret",
+    )
+    pr = TemplateDataPR(
+        title="Demo PR",
+        number=42,
+        html_url="https://example.com/pr/42",
+        user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
+    )
+    message = render_message(settings=settings, pr=pr)
+    assert message == (
+        "* Demo PR. PR [#42](https://example.com/pr/42) by "
+        "[@khulnasoft](https://github.com/khulnasoft)."
+    )
+
+
+def test_missing_header_raises_typed_error():
+    settings = Settings(
+        github_repository="khulnasoft/latest-changes",
+        github_event_path="event.json",
+        input_token="secret",
+    )
+    pr = TemplateDataPR(
+        title="Demo PR",
+        number=42,
+        html_url="https://example.com/pr/42",
+        user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
+    )
+    with pytest.raises(MissingHeaderError):
+        generate_content(content="## Release Notes\n", settings=settings, pr=pr, labels=[])
+
+
+def test_already_added_raises_typed_error():
+    settings = Settings(
+        github_repository="khulnasoft/latest-changes",
+        github_event_path="event.json",
+        input_token="secret",
+    )
+    pr = TemplateDataPR(
+        title="Demo PR",
+        number=42,
+        html_url="https://example.com/pr/42",
+        user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
+    )
+    message = render_message(settings=settings, pr=pr)
+    content = f"### Latest Changes\n\n{message}\n"
+    with pytest.raises(AlreadyAddedError):
+        generate_content(content=content, settings=settings, pr=pr, labels=[])
+
+
+def test_validate_settings_rejects_bad_repository():
+    with pytest.raises(ValidationError):
+        Settings(
+            github_repository="not-a-repo",
+            github_event_path="event.json",
+            input_token="secret",
+        )
+
+
+def test_validate_settings_rejects_empty_header():
+    with pytest.raises(ValidationError):
+        Settings(
+            github_repository="khulnasoft/latest-changes",
+            github_event_path="event.json",
+            input_token="secret",
+            input_latest_changes_header="   ",
+        )
+
+
+def test_validate_settings_rejects_missing_template(tmp_path):
+    settings = Settings(
+        github_repository="khulnasoft/latest-changes",
+        github_event_path="event.json",
+        input_token="secret",
+        input_template_file=tmp_path / "missing.jinja2",
+    )
+    with pytest.raises(ConfigurationError):
+        validate_settings(settings)
+
+
+def test_validate_settings_rejects_bad_end_regex():
+    settings = Settings(
+        github_repository="khulnasoft/latest-changes",
+        github_event_path="event.json",
+        input_token="secret",
+        input_end_regex="(",
+    )
+    with pytest.raises(ConfigurationError):
+        validate_settings(settings)
+
+
+def test_write_outputs_emits_message_and_json(tmp_path, monkeypatch):
+    output = tmp_path / "output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    pr = TemplateDataPR(
+        title="Demo PR",
+        number=42,
+        html_url="https://example.com/pr/42",
+        user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
+    )
+    write_outputs(message="hello", pr=pr, labels=["feature"])
+    written = output.read_text()
+    assert "message<<EOF\nhello\nEOF" in written
+    assert '"number": 42' in written
+    assert '"labels": ["feature"]' in written
+
+
+def test_write_outputs_noop_without_env(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    pr = TemplateDataPR(
+        title="Demo PR",
+        number=42,
+        html_url="https://example.com/pr/42",
+        user=TemplateDataUser(login="khulnasoft", html_url="https://github.com/khulnasoft"),
+    )
+    write_outputs(message="hello", pr=pr, labels=[])

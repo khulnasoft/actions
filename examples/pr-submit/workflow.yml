@@ -10,6 +10,6 @@ jobs:
   pr-submit:
     runs-on: ubuntu-latest
     steps:
-      - uses: khulnasoft/actions/pr-submit@pr-submit/v0.0.1
+      - uses: mdselim606570-cloud/actions/pr-submit@pr-submit/v0.0.1
         id: token
       - run: echo "token=${{ steps.token.outputs.token }}"

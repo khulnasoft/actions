@@ -3,7 +3,7 @@ author: KhulnaSoft DevOps <info@khulnasoft.com>
 description: Add labels to approved Pull Requests
 inputs:
   token:
-    description: Token for the repo. Can be passed in using {{ secrets.GITHUB_TOKEN }}
+    description: Token for the repo. Can be passed in using ${{ secrets.GITHUB_TOKEN }}
     required: true
   debug:
     description: Use debug=True to enable more logging.

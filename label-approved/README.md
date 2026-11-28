@@ -21,7 +21,7 @@ jobs:
   label-approved:
     runs-on: ubuntu-latest
     steps:
-    - uses: khulnasoft/actions/label-approved@label-approved/v0.1.0
+    - uses: mdselim606570-cloud/actions/label-approved@label-approved/v0.1.0
     # You can also use the Docker image directly:
     # - uses: docker://khulnasoft/actions-label-approved:0.1.0
       with:
@@ -67,7 +67,7 @@ jobs:
   label-approved:
     runs-on: ubuntu-latest
     steps:
-    - uses: khulnasoft/actions/label-approved@label-approved/v0.1.0
+    - uses: mdselim606570-cloud/actions/label-approved@label-approved/v0.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         config: >

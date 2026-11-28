@@ -13,7 +13,7 @@ ACTIONS = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-s
 
 # Paths that affect every action's test environment.
 SHARED_FILES = {"pyproject.toml", "requirements-dev.txt"}
-SHARED_PREFIXES = ("scripts/", ".github/", "tests/")
+SHARED_PREFIXES = ("scripts/", ".github/", "tests/", "shared/")
 
 # Paths that never affect action code and can be safely ignored.
 IGNORE_PREFIXES = ("docs/", "examples/")

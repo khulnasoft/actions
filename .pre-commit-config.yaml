@@ -32,4 +32,11 @@ repos:
           - pyyaml
           - types-PyYAML
         pass_filenames: false
-        args: [issue-manager, label-approved, latest-changes, pr-push, pr-submit]
+        args: [
+          issue-manager,
+          label-approved,
+          latest-changes,
+          pr-push,
+          pr-submit,
+          shared/python,
+        ]

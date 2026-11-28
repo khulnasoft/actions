@@ -46,8 +46,11 @@ ruff format --check <action>
 # Type checking
 mypy <action>
 
-# Tests for one action
-PYTHONPATH=<action> pytest <action>/tests --import-mode=importlib
+# Tests for one action (include shared/python for token-broker actions)
+PYTHONPATH=<action>:shared/python pytest <action>/tests --import-mode=importlib
+
+# Shared package checks
+ruff check shared/python && mypy shared/python
 
 # Repository-level validation (run in CI)
 python scripts/validate_metadata.py
@@ -57,11 +60,12 @@ python scripts/affected_actions.py   # reads changed paths on stdin
 
 ## Docker builds
 
-Each action builds from its own directory — the build context is the action
-directory, not the repository root:
+Each action builds from the **repository root** — the build context is the
+repository root so that shared Python code in `shared/python/` is available to
+the token-broker actions. A root `.dockerignore` keeps the context small:
 
 ```bash
-docker build -f issue-manager/base.dockerfile issue-manager
+docker build -f issue-manager/base.dockerfile .
 ```
 
 `base.dockerfile` builds the runtime image from source.

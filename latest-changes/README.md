@@ -29,17 +29,31 @@ on:
 jobs:
   latest-changes:
     runs-on: ubuntu-latest
-    # Needed for private repos
+    # Minimal permissions: write release notes, read the merged PR's labels
     permissions:
+      contents: write
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
-      - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
+      - uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 In this minimal example, it uses all the default configurations.
+
+### Permissions
+
+Grant the workflow the smallest set of `GITHUB_TOKEN` permissions needed:
+
+| Permission | Why |
+|---|---|
+| `contents: write` | Commit and push the updated release-notes file |
+| `pull-requests: read` | Read the merged PR's title, author, and labels |
+
+No other permissions are required. For protected branches that reject the
+default token, see [Protected Branches](#protected-branches) for a fine-grained
+token with `Contents: read and write`.
 
 After merging a PR to the main branch, it will:
 
@@ -172,7 +186,7 @@ jobs:
       pull-requests: read
     steps:
     - uses: actions/checkout@v2
-    - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
+    - uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         latest_changes_file: docs/release-notes.md
@@ -289,7 +303,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.ACTIONS_TOKEN }}
-      - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
+      - uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```

@@ -1,8 +1,34 @@
-import base64
-from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
+
+from actions_shared.models import (
+    CollaboratorPermission,
+    GitHubUser,
+    Installation,
+    InstallationToken,
+    OIDCTokenResponse,
+    Repository,
+    RepositoryFile,
+    TokenRepository,
+    TokenResponse,
+    WorkflowConfig,
+)
+
+__all__ = [
+    "CONFIG_PATH",
+    "CollaboratorPermission",
+    "GitHubUser",
+    "Installation",
+    "InstallationToken",
+    "OIDCClaims",
+    "OIDCTokenResponse",
+    "Repository",
+    "RepositoryFile",
+    "TokenRepository",
+    "TokenResponse",
+    "WorkflowConfig",
+]
 
 CONFIG_PATH = ".github/pr-submit.yml"
 
@@ -30,59 +56,3 @@ class OIDCClaims(BaseModel):
         if not separator or not path.startswith(".github/workflows/"):
             raise ValueError("Unexpected workflow path")
         return path
-
-
-class Repository(BaseModel):
-    default_branch: str
-
-
-class Installation(BaseModel):
-    id: int
-
-
-class TokenRepository(BaseModel):
-    id: int
-
-
-class InstallationToken(BaseModel):
-    token: str
-    expires_at: datetime
-    permissions: dict[str, str]
-    repository_selection: str
-    repositories: list[TokenRepository]
-
-
-class RepositoryFile(BaseModel):
-    type: Literal["file"]
-    sha: str
-    encoding: Literal["base64"]
-    content: str
-
-    def decoded_content(self) -> bytes:
-        return base64.b64decode(self.content)
-
-
-class WorkflowConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    workflows: list[str] = Field(min_length=1)
-
-
-class GitHubUser(BaseModel):
-    id: int
-
-
-class CollaboratorPermission(BaseModel):
-    permission: Literal["admin", "write", "read", "none"]
-    user: GitHubUser
-
-
-class OIDCTokenResponse(BaseModel):
-    value: str
-
-
-class TokenResponse(BaseModel):
-    token: str
-    expires_at: datetime
-    repository: str
-    permissions: dict[str, str]
