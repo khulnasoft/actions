@@ -166,4 +166,4 @@ jobs:
           sudo mv "${BINARY}" /usr/local/bin/hadolint
 
       - name: Lint Dockerfiles
-        run: hadolint */base.dockerfile
+        run: hadolint ./*/base.dockerfile
