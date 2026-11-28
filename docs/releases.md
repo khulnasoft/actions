@@ -7,6 +7,10 @@ not rebuild or re-release the others.
 
 - Source of truth: `<action>/version.txt` (semver `MAJOR.MINOR.PATCH`).
 - Git tags are path-scoped: `<action>/v<version>` (e.g. `issue-manager/v0.6.0`).
+  Only exact-version tags are published. Major-version aliases (e.g.
+  `<action>/v0`) are intentionally **not** created, because published tags are
+  immutable and a moving alias would violate that guarantee. Consumers should
+  pin exact versions; Dependabot can keep them updated.
 - There is no single repository-wide version.
 
 ## Cutting a release

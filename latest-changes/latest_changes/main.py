@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -9,7 +11,7 @@ from github import Github
 from github.Auth import Token
 from github.PullRequest import PullRequest
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, field_validator
 from pydantic_settings import BaseSettings
 
 COMMIT_MESSAGE = """
@@ -17,6 +19,24 @@ COMMIT_MESSAGE = """
 
 [skip ci]
 """.strip()
+
+REPOSITORY_RE = re.compile(r"^[^/]+/[^/]+$")
+
+
+class LatestChangesError(RuntimeError):
+    """Base error for latest-changes failures."""
+
+
+class MissingHeaderError(LatestChangesError):
+    """The latest changes header was not found in the target file."""
+
+
+class AlreadyAddedError(LatestChangesError):
+    """The rendered message is already present in the target file."""
+
+
+class ConfigurationError(LatestChangesError):
+    """Required configuration or input is missing or invalid."""
 
 
 class Section(BaseModel):
@@ -47,6 +67,20 @@ class Settings(BaseSettings):
         Section(label="internal", header="Internal"),
     ]
     input_label_header_prefix: str = "#### "
+
+    @field_validator("github_repository")
+    @classmethod
+    def validate_repository(cls, value: str) -> str:
+        if not REPOSITORY_RE.fullmatch(value):
+            raise ValueError("github_repository must be in the form 'owner/repo'")
+        return value
+
+    @field_validator("input_latest_changes_header")
+    @classmethod
+    def validate_header(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("input_latest_changes_header must not be empty")
+        return value
 
 
 class PartialGitHubEventInputs(BaseModel):
@@ -80,6 +114,40 @@ class SectionContent(BaseModel):
 logging.basicConfig(level=logging.INFO)
 
 
+def render_message(*, settings: Settings, pr: PullRequest | TemplateDataPR) -> str:
+    """Render the Jinja2 template for a pull request into a release-note line."""
+    template_content = settings.input_template_file.read_text("utf-8")
+    env = Environment(
+        loader=FileSystemLoader(searchpath=str(settings.input_template_file.parent)),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
+    template = env.from_string(template_content)
+    return template.render(pr=pr)
+
+
+def validate_settings(settings: Settings) -> None:
+    """Fail fast on missing or invalid inputs before touching git or the API."""
+    if not settings.input_token.get_secret_value():
+        raise ConfigurationError("input_token must not be empty")
+    if not settings.input_template_file.is_file():
+        raise ConfigurationError(
+            f"The template file doesn't seem to exist: {settings.input_template_file}"
+        )
+    try:
+        re.compile(settings.input_end_regex)
+    except re.error as error:
+        raise ConfigurationError(
+            f"input_end_regex is not a valid regular expression: {settings.input_end_regex}"
+        ) from error
+    try:
+        re.compile(settings.input_latest_changes_header)
+    except re.error as error:
+        raise ConfigurationError(
+            "input_latest_changes_header is not a valid regular expression: "
+            f"{settings.input_latest_changes_header}"
+        ) from error
+
+
 def generate_content(
     *,
     content: str,
@@ -110,18 +178,14 @@ def generate_content(
     """
     header_match = re.search(settings.input_latest_changes_header, content, flags=re.MULTILINE)
     if not header_match:
-        raise RuntimeError(
+        raise MissingHeaderError(
             f"The latest changes file at: {settings.input_latest_changes_file} doesn't seem to contain the header RegEx: {settings.input_latest_changes_header}"
         )
-    template_content = settings.input_template_file.read_text("utf-8")
-    env = Environment(
-        loader=FileSystemLoader(searchpath=str(settings.input_template_file.parent)),
-        autoescape=select_autoescape(["html", "xml"]),
-    )
-    template = env.from_string(template_content)
-    message = template.render(pr=pr)
+    message = render_message(settings=settings, pr=pr)
     if message in content:
-        raise RuntimeError(f"It seems these PR's latest changes were already added: {pr.number}")
+        raise AlreadyAddedError(
+            f"It seems these PR's latest changes were already added: {pr.number}"
+        )
     pre_header_content = content[: header_match.end()].strip()
     post_header_content = content[header_match.end() :].strip()
     next_release_match = re.search(
@@ -209,6 +273,28 @@ def generate_content(
     return new_content
 
 
+def write_outputs(
+    *,
+    message: str,
+    pr: PullRequest | TemplateDataPR,
+    labels: list[str],
+) -> None:
+    """Publish the rendered change as GitHub Actions outputs when available."""
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if not output_path:
+        return
+    changes = {
+        "number": pr.number,
+        "title": pr.title,
+        "url": pr.html_url,
+        "labels": labels,
+        "message": message,
+    }
+    with open(output_path, "a", encoding="utf-8") as output_file:
+        output_file.write(f"message<<EOF\n{message}\nEOF\n")
+        output_file.write(f"changes_json={json.dumps(changes)}\n")
+
+
 def main() -> None:
     git_bin = shutil.which("git")
     if not git_bin:
@@ -223,6 +309,11 @@ def main() -> None:
     dotgitconfig_path.write_text(safe_directory_config_content)
 
     settings = Settings()  # type: ignore[call-arg]
+    try:
+        validate_settings(settings)
+    except ConfigurationError as error:
+        logging.error(str(error))
+        sys.exit(1)
     if settings.input_debug_logs:
         logging.info(f"Using config: {settings.model_dump_json()}")
     g = Github(auth=Token(settings.input_token.get_secret_value()))
@@ -252,6 +343,10 @@ def main() -> None:
         )
         sys.exit(1)
 
+    labels = [label.name for label in pr.labels]
+    message = render_message(settings=settings, pr=pr)
+    write_outputs(message=message, pr=pr, labels=labels)
+
     logging.info("Setting up GitHub Actions git user")
     subprocess.run([git_bin, "config", "user.name", "github-actions[bot]"], check=True)
     subprocess.run(
@@ -266,12 +361,19 @@ def main() -> None:
         subprocess.run([git_bin, "pull"], check=True)
         content = settings.input_latest_changes_file.read_text()
 
-        new_content = generate_content(
-            content=content,
-            settings=settings,
-            pr=pr,
-            labels=[label.name for label in pr.labels],
-        )
+        try:
+            new_content = generate_content(
+                content=content,
+                settings=settings,
+                pr=pr,
+                labels=labels,
+            )
+        except AlreadyAddedError:
+            logging.info("The latest changes were already added, nothing else to do.")
+            sys.exit(0)
+        except MissingHeaderError as error:
+            logging.error(str(error))
+            sys.exit(1)
         settings.input_latest_changes_file.write_text(new_content)
         logging.info(f"Committing changes to: {settings.input_latest_changes_file}")
         subprocess.run([git_bin, "add", str(settings.input_latest_changes_file)], check=True)

@@ -26,11 +26,12 @@ jobs:
           ACTIONLINT_VERSION: 1.7.12
         run: |
           set -euo pipefail
+          TARBALL="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
           BASE_URL="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}"
-          curl -sSfL "${BASE_URL}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" -o actionlint.tar.gz
+          curl -sSfL "${BASE_URL}/${TARBALL}" -o "${TARBALL}"
           curl -sSfL "${BASE_URL}/actionlint_${ACTIONLINT_VERSION}_checksums.txt" -o checksums.txt
-          grep "actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" checksums.txt | sha256sum -c -
-          tar -xzf actionlint.tar.gz actionlint
+          grep "${TARBALL}" checksums.txt | sha256sum -c -
+          tar -xzf "${TARBALL}" actionlint
 
       - name: Run actionlint
         run: ./actionlint -color

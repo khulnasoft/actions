@@ -29,8 +29,9 @@ on:
 jobs:
   latest-changes:
     runs-on: ubuntu-latest
-    # Needed for private repos
+    # Minimal permissions: write release notes, read the merged PR's labels
     permissions:
+      contents: write
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +41,19 @@ jobs:
 ```
 
 In this minimal example, it uses all the default configurations.
+
+### Permissions
+
+Grant the workflow the smallest set of `GITHUB_TOKEN` permissions needed:
+
+| Permission | Why |
+|---|---|
+| `contents: write` | Commit and push the updated release-notes file |
+| `pull-requests: read` | Read the merged PR's title, author, and labels |
+
+No other permissions are required. For protected branches that reject the
+default token, see [Protected Branches](#protected-branches) for a fine-grained
+token with `Contents: read and write`.
 
 After merging a PR to the main branch, it will:
 

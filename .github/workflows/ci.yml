@@ -95,7 +95,7 @@ jobs:
       - name: pytest
         env:
           ACTION: ${{ matrix.action }}
-          PYTHONPATH: ${{ matrix.action }}
+          PYTHONPATH: ${{ matrix.action }}:shared/python
         run: pytest "$ACTION/tests" --cov="$ACTION" --cov-report=xml --import-mode=importlib
 
       - name: Upload coverage
@@ -123,6 +123,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+          pip install -r pr-push/requirements.txt
 
       - name: Validate action.yml files
         run: python scripts/validate_metadata.py
@@ -130,5 +131,39 @@ jobs:
       - name: Check version/pin/ref consistency
         run: python scripts/prepare_release.py check
 
+      - name: Ruff lint (shared)
+        run: ruff check shared/python
+
+      - name: Ruff format check (shared)
+        run: ruff format --check shared/python
+
+      - name: mypy (shared)
+        run: mypy shared/python
+
       - name: Run repository tests
         run: python -m pytest tests/ -q
+
+  hadolint:
+    name: Hadolint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install Hadolint
+        env:
+          HADOLINT_VERSION: 2.12.0
+        run: |
+          set -euo pipefail
+          BINARY="hadolint-Linux-x86_64"
+          BASE_URL="https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}"
+          curl -sSfL "${BASE_URL}/${BINARY}" -o "${BINARY}"
+          curl -sSfL "${BASE_URL}/${BINARY}.sha256" -o "${BINARY}.sha256"
+          sha256sum -c "${BINARY}.sha256"
+          chmod +x "${BINARY}"
+          sudo mv "${BINARY}" /usr/local/bin/hadolint
+
+      - name: Lint Dockerfiles
+        run: hadolint ./*/base.dockerfile

@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        action: [issue-manager, label-approved, latest-changes]
+        action: [issue-manager, label-approved, latest-changes, pr-push, pr-submit]
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -87,10 +87,10 @@ jobs:
         run: |
           set -euo pipefail
           BASE_URL="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
-          curl -sSfL "${BASE_URL}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o gitleaks.tar.gz
+          curl -sSfL "${BASE_URL}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           curl -sSfL "${BASE_URL}/gitleaks_${GITLEAKS_VERSION}_checksums.txt" -o checksums.txt
           grep "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" checksums.txt | sha256sum -c -
-          tar -xzf gitleaks.tar.gz gitleaks
+          tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
 
       - name: Scan git history for secrets
         run: |
@@ -241,7 +241,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        action: [issue-manager, label-approved, latest-changes]
+        action: [issue-manager, label-approved, latest-changes, pr-push, pr-submit]
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -249,7 +249,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c23212 # v3.10.0
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
       - name: Build runtime image
         env:
@@ -259,7 +259,7 @@ jobs:
           docker buildx build --load \
             -f "$ACTION/base.dockerfile" \
             -t "security-scan-$ACTION:latest" \
-            "$ACTION"
+            .
 
       - name: Trivy image vulnerability scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

@@ -48,6 +48,8 @@ def test_affected_actions_shared_paths_affect_all() -> None:
             "issue-manager",
             "label-approved",
             "latest-changes",
+            "pr-push",
+            "pr-submit",
         ], path
 
 
@@ -68,6 +70,8 @@ def test_affected_actions_unknown_path_tests_everything() -> None:
             "issue-manager",
             "label-approved",
             "latest-changes",
+            "pr-push",
+            "pr-submit",
         ], path
 
 

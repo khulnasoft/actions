@@ -2,7 +2,7 @@
 
 ## Repository layout
 
-This is a monorepo containing three independent GitHub Actions. Each action
+This is a monorepo containing five independent GitHub Actions. Each action
 lives in its own top-level directory and is released independently:
 
 | Action | Directory | Version file | Git tag |
@@ -10,6 +10,8 @@ lives in its own top-level directory and is released independently:
 | Issue Manager | `issue-manager/` | `issue-manager/version.txt` | `issue-manager/vX.Y.Z` |
 | Label Approved | `label-approved/` | `label-approved/version.txt` | `label-approved/vX.Y.Z` |
 | Latest Changes | `latest-changes/` | `latest-changes/version.txt` | `latest-changes/vX.Y.Z` |
+| PR Push | `pr-push/` | `pr-push/version.txt` | `pr-push/vX.Y.Z` |
+| PR Submit | `pr-submit/` | `pr-submit/version.txt` | `pr-submit/vX.Y.Z` |
 
 See [architecture.md](architecture.md) for the full architecture and
 [migration.md](migration.md) for the migration policy from the old
@@ -44,8 +46,11 @@ ruff format --check <action>
 # Type checking
 mypy <action>
 
-# Tests for one action
-PYTHONPATH=<action> pytest <action>/tests --import-mode=importlib
+# Tests for one action (include shared/python for token-broker actions)
+PYTHONPATH=<action>:shared/python pytest <action>/tests --import-mode=importlib
+
+# Shared package checks
+ruff check shared/python && mypy shared/python
 
 # Repository-level validation (run in CI)
 python scripts/validate_metadata.py
@@ -55,11 +60,12 @@ python scripts/affected_actions.py   # reads changed paths on stdin
 
 ## Docker builds
 
-Each action builds from its own directory — the build context is the action
-directory, not the repository root:
+Each action builds from the **repository root** — the build context is the
+repository root so that shared Python code in `shared/python/` is available to
+the token-broker actions. A root `.dockerignore` keeps the context small:
 
 ```bash
-docker build -f issue-manager/base.dockerfile issue-manager
+docker build -f issue-manager/base.dockerfile .
 ```
 
 `base.dockerfile` builds the runtime image from source.

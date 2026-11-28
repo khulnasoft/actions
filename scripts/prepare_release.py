@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 
-ACTIONS = ["issue-manager", "label-approved", "latest-changes"]
+ACTIONS = ["issue-manager", "label-approved", "latest-changes", "pr-push", "pr-submit"]
 
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 PYPROJECT_VERSION_RE = re.compile(r'(?m)^version = "(\d+\.\d+\.\d+)"$')
@@ -74,7 +74,10 @@ def check(action: str | None = None) -> int:
         readme = Path(a) / "README.md"
         if readme.exists():
             content = readme.read_text()
-            for m in re.finditer(r"khulnasoft/actions/[a-z-]+@[a-z-]+/v(\d+\.\d+\.\d+)", content):
+            for m in re.finditer(
+                r"(?:khulnasoft|khulnasoft)/actions/[a-z-]+@[a-z-]+/v(\d+\.\d+\.\d+)",
+                content,
+            ):
                 if m.group(1) != ver:
                     errors.append(f"{a}/README.md references version {m.group(1)}, expected {ver}")
     if errors:

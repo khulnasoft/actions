@@ -3,7 +3,7 @@ author: KhulnaSoft Ltd <info@khulnasoft.com>
 description: Update the release notes with the "latest changes" right after a PR is merged.
 inputs:
   token:
-    description: Token for the repo. Can be passed in using {{ secrets.GITHUB_TOKEN }}.
+    description: Token for the repo. Can be passed in using ${{ secrets.GITHUB_TOKEN }}.
     required: true
   number:
     description: Optional PR number to call this GitHub Action manually in a workflow.
@@ -47,6 +47,11 @@ inputs:
   label_header_prefix:
     description: A prefix to put before each label's header. This is also used to detect where the next label header starts. By default it is `#### `, so the headers will look like `#### Features`.
     default: "#### "
+outputs:
+  message:
+    description: The rendered release-note line that was added for this pull request.
+  changes_json:
+    description: A JSON object with the pull request number, title, URL, labels, and rendered message.
 runs:
   using: docker
   image: Dockerfile

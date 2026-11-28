@@ -75,13 +75,18 @@ gh attestation verify sbom-issue-manager.spdx.json --owner khulnasoft
 
 ## Reproducibility status
 
-Builds are **not currently bit-for-bit reproducible**. Known sources of
-nondeterminism:
+Builds are **not currently bit-for-bit reproducible**. Addressed so far:
 
-- `FROM python:3.14-slim` is a floating tag — the base image changes over
-  time.
-- `pip install -r requirements.txt` resolves dependency versions at build
-  time unless fully pinned.
+- The base image is pinned by digest (`python:3.14-slim@sha256:…`) in every
+  `base.dockerfile`, so the base no longer floats.
+- Direct runtime dependencies in each `requirements.txt` are pinned to exact
+  versions.
+
+Remaining sources of nondeterminism:
+
+- Transitive dependencies are still resolved by `pip` at build time (direct
+  pins do not constrain them). Full reproducibility requires a compiled lock
+  file with hashes.
 - Image config timestamps differ per build.
 
 The `repro-check` job in `container-build.yml` (manual dispatch, `ref`
@@ -90,10 +95,9 @@ input) builds each action twice without cache and compares RootFS layer
 detects content drift; registry digest equality across rebuilds is *not*
 expected today.
 
-If reproducible builds become a requirement, the path is: pin the base
-image by digest, fully pin Python dependencies (`pip-compile`/`uv pip
-compile` with hashes), and set `SOURCE_DATE_EPOCH` with BuildKit's
-`rewrite-timestamp`.
+If bit-for-bit reproducibility becomes a requirement, the remaining path is:
+compile a fully pinned lock file (`pip-compile`/`uv pip compile` with hashes)
+and set `SOURCE_DATE_EPOCH` with BuildKit's `rewrite-timestamp`.
 
 ## Release integrity tests
 
