@@ -33,7 +33,7 @@ jobs:
   issue-manager:
     runs-on: ubuntu-latest
     steps:
-      - uses: mdselim606570-cloud/actions/issue-manager@issue-manager/v0.6.0
+      - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: '{"answered": {}}'
@@ -224,7 +224,7 @@ jobs:
   issue-manager:
     runs-on: ubuntu-latest
     steps:
-      - uses: mdselim606570-cloud/actions/issue-manager@issue-manager/v0.6.0
+      - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: >
@@ -294,7 +294,7 @@ jobs:
   issue-manager:
     runs-on: ubuntu-latest
     steps:
-      - uses: mdselim606570-cloud/actions/issue-manager@issue-manager/v0.6.0
+      - uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: >

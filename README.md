@@ -1,4 +1,4 @@
-# mdselim606570-cloud/actions
+# khulnasoft/actions
 
 GitHub Actions by [KhulnaSoft Ltd](https://github.com/khulnasoft), maintained in this fork.
 
@@ -17,11 +17,11 @@ GitHub Actions by [KhulnaSoft Ltd](https://github.com/khulnasoft), maintained in
 Each action is referenced by its subdirectory path and a path-scoped tag:
 
 ```yaml
-- uses: mdselim606570-cloud/actions/issue-manager@issue-manager/v0.6.0
-- uses: mdselim606570-cloud/actions/label-approved@label-approved/v0.1.0
-- uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
-- uses: mdselim606570-cloud/actions/pr-push@pr-push/v0.0.1
-- uses: mdselim606570-cloud/actions/pr-submit@pr-submit/v0.0.1
+- uses: khulnasoft/actions/issue-manager@issue-manager/v0.6.0
+- uses: khulnasoft/actions/label-approved@label-approved/v0.1.0
+- uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
+- uses: khulnasoft/actions/pr-push@pr-push/v0.0.1
+- uses: khulnasoft/actions/pr-submit@pr-submit/v0.0.1
 ```
 
 See each action's README for detailed inputs, examples, and migration notes.

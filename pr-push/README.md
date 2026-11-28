@@ -25,7 +25,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: mdselim606570-cloud/actions/pr-push@pr-push/v0.0.1
+      - uses: khulnasoft/actions/pr-push@pr-push/v0.0.1
         id: token
       - run: echo "token=${{ steps.token.outputs.token }}"
 ```

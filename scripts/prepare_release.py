@@ -75,7 +75,7 @@ def check(action: str | None = None) -> int:
         if readme.exists():
             content = readme.read_text()
             for m in re.finditer(
-                r"(?:khulnasoft|mdselim606570-cloud)/actions/[a-z-]+@[a-z-]+/v(\d+\.\d+\.\d+)",
+                r"(?:khulnasoft|khulnasoft)/actions/[a-z-]+@[a-z-]+/v(\d+\.\d+\.\d+)",
                 content,
             ):
                 if m.group(1) != ver:

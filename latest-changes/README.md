@@ -35,7 +35,7 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
-      - uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
+      - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -186,7 +186,7 @@ jobs:
       pull-requests: read
     steps:
     - uses: actions/checkout@v2
-    - uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
+    - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         latest_changes_file: docs/release-notes.md
@@ -303,7 +303,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.ACTIONS_TOKEN }}
-      - uses: mdselim606570-cloud/actions/latest-changes@latest-changes/v0.4.0
+      - uses: khulnasoft/actions/latest-changes@latest-changes/v0.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
